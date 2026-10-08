@@ -100,6 +100,35 @@
   #eclair.flash { animation: flash .5s ease-out; }
   @keyframes flash { 0% { opacity: .9; } 100% { opacity: 0; } }
   @media (prefers-reduced-motion: reduce) { .fleche, .case.actuelle, #eclair.flash { animation: none; } }
+
+  /* ---------- Capture : sigil ---------- */
+  #sigil { position: fixed; left: 0; top: 0; width: 82vmin; height: 82vmin; margin: -41vmin 0 0 -41vmin; z-index: 8;
+    pointer-events: none; mix-blend-mode: screen; }
+
+  /* ---------- Victoire ---------- */
+  .portrait { width: min(62vw, 300px); aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 0 22px rgba(79,243,255,.55)); }
+  .final { color: var(--citrouille); font-weight: 600; }
+  .boutons { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; }
+  .petit { min-width: 0; font-size: 1.25rem; padding: 12px 24px 10px; }
+
+  /* ---------- Inventaire ---------- */
+  #inventaire { z-index: 6; }
+  #inventaire .contenu { justify-content: flex-start; gap: 14px; overflow-y: auto; padding-bottom: calc(36px + env(safe-area-inset-bottom, 0px)); }
+  #inventaire h2 { margin: 0; font-family: var(--titre); font-weight: 400; font-size: clamp(2.2rem, 11vw, 3.2rem); letter-spacing: .05em;
+    color: var(--menthe); text-shadow: 0 0 14px rgba(79,243,255,.5); }
+  .compte { font-family: var(--titre); letter-spacing: .12em; color: var(--cyan); font-variant-numeric: tabular-nums; }
+  .grille { width: 100%; max-width: 520px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .carte { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px 12px;
+    border: 2px solid #2f6670; border-radius: 22px 10px 22px 10px; background: linear-gradient(180deg, rgba(16,42,51,.92), rgba(2,10,14,.92));
+    box-shadow: 0 4px 0 #01080b; }
+  .carte.prise { border-color: var(--cyan); box-shadow: 0 4px 0 #01080b, 0 0 16px rgba(79,243,255,.35); }
+  .carte img { width: 100%; aspect-ratio: 1; object-fit: contain; }
+  .carte img.ombre { filter: brightness(0) drop-shadow(0 0 6px rgba(79,243,255,.7)); opacity: .75; }
+  .carte .nom { font-family: var(--titre); font-size: 1.25rem; letter-spacing: .05em; color: var(--cyan); }
+  .carte .astuce { font-size: 1rem; line-height: 1.25; color: var(--brume); }
+  .carte .astuce b { color: var(--citrouille); font-weight: 600; }
+  .carte.derniere { grid-column: 1 / -1; max-width: 50%; justify-self: center; width: 100%; }
+  .piege { cursor: pointer; }
 </style>
 </head>
 <body>
@@ -131,31 +160,43 @@
 <div id="accueil" class="ecran">
   <div class="contenu">
     <h1>Chasse aux monstres</h1>
-    <p id="intro">Un monstre rôde tout près. Ouvre l'œil magique pour le voir.</p>
-    <button id="demarrer" class="planche" type="button">Ouvrir l'œil</button>
+    <p id="intro">Scanne un QR code caché dans le parc pour faire apparaître une créature.</p>
+    <button id="demarrer" class="planche" type="button" hidden>Ouvrir l'œil</button>
+    <button class="planche petit ouvrir-inventaire" type="button">Mon inventaire</button>
     <p id="erreur" hidden></p>
   </div>
-  <div class="piege"><div class="piege-titre"></div><div class="cases"></div></div>
+  <div class="piege ouvrir-inventaire"><div class="piege-titre"></div><div class="cases"></div></div>
 </div>
 
 <div id="scene" hidden>
   <canvas id="vue"></canvas>
-  <div id="chargement" hidden>Le monstre approche…</div>
+  <div id="chargement" hidden>La créature approche…</div>
   <div id="gauche" class="fleche" hidden>❮</div>
   <div id="droite" class="fleche" hidden>❯</div>
   <div id="nomMonstre" class="planche hud-haut"></div>
-  <div id="consigne" class="consigne">Tourne sur toi-même pour le trouver, puis touche-le !</div>
-  <div class="piege"><div class="piege-titre"></div><div class="cases"></div></div>
+  <div id="consigne" class="consigne">Tourne sur toi-même pour la trouver, puis touche-la !</div>
+  <div class="piege ouvrir-inventaire"><div class="piege-titre"></div><div class="cases"></div></div>
 </div>
+<img id="sigil" alt="" hidden>
 <div id="eclair"></div>
 
 <div id="victoire" class="ecran voile" hidden>
   <div class="contenu">
     <div class="titre">Capturé !</div>
+    <img id="portrait" class="portrait" alt="">
     <p id="compteur"></p>
-    <div class="planche indice"><small>Indice</small><span id="indice"></span></div>
+    <p id="final" class="final" hidden>Bravo ! Les sept créatures sont dans ton piège. Va montrer ton inventaire au maître du jeu pour recevoir le trésor.</p>
+    <div class="boutons"><button class="planche petit ouvrir-inventaire" type="button">Mon inventaire</button></div>
   </div>
-  <div class="piege"><div class="piege-titre"></div><div class="cases"></div></div>
+</div>
+
+<div id="inventaire" class="ecran" hidden>
+  <div class="contenu">
+    <h2>Mon inventaire</h2>
+    <div class="compte" id="compteInventaire"></div>
+    <div class="grille" id="grille"></div>
+    <button id="fermerInventaire" class="planche petit" type="button">Fermer</button>
+  </div>
 </div>
 
 <script type="importmap">
@@ -169,63 +210,114 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 /* ============ À PERSONNALISER ============
-   Un monstre par QR code : l'adresse du QR se termine par ?m=1, ?m=2, etc.
-   modele  : fichier .glb posé à côté de cette page ("" = fantôme provisoire)
-   nage    : true pour animer le monstre du bassin par son squelette
-   taille  : hauteur du monstre en mètres
-   hauteur : position verticale en mètres par rapport aux yeux (négatif = plus bas, 0 = à hauteur des yeux)
-   indice  : ce qui s'affiche une fois le monstre capturé */
+   Un QR code par créature : l'adresse se termine par ?m=1 … ?m=7
+   modele   : fichier .glb animé, posé à côté de cette page
+   image    : animation de l'inventaire (WebP transparent) ; ombre : silhouette fixe
+   taille   : hauteur de la créature en mètres
+   altitude : hauteur au-dessus du sol en mètres (0 = posée au sol)
+   distance : distance au joueur en mètres
+   cap      : rotation en degrés pour que la créature regarde le joueur
+   indice   : l'indice qui aide les enfants à la trouver */
 const MONSTRES = {
-  "1": { nom: "le Mothman",           modele: "", taille: 1.8, hauteur: 0.3,  indice: "Prochaine étape : le grand arbre" },
-  "2": { nom: "le Lutin moussu",      modele: "", taille: 0.7, hauteur: -1.1, indice: "Prochaine étape : les buissons" },
-  "3": { nom: "le Lutin des racines", modele: "", taille: 0.7, hauteur: -1.1, indice: "Prochaine étape : le banc" },
-  "4": { nom: "le Monstre du bassin", modele: "monstre-bassin.glb", nage: true, taille: 1.0, hauteur: -1.0, indice: "Prochaine étape : le lampadaire" },
-  "5": { nom: "le Barghest",          modele: "", taille: 1.0, hauteur: -1.4, indice: "Prochaine étape : l'entrée du parking" },
-  "6": { nom: "le Thunderbird",       modele: "", taille: 2.0, hauteur: 0.8,  indice: "Prochaine étape : le toboggan" },
-  "7": { nom: "la Fée",               modele: "", taille: 0.5, hauteur: 0,    indice: "Rendez-vous au chaudron !" }
+  "1": { nom: "le Mothman", court: "Mothman", modele: "mothman.glb", image: "inventaire-mothman.webp", ombre: "ombre-mothman.png",
+         taille: 1.3, altitude: 0.4, distance: 3.2, cap: 0, indice: "aime la lumière", fx: "lumiere" },
+  "2": { nom: "Nessie", court: "Nessie", modele: "nessie.glb", image: "inventaire-nessie.webp", ombre: "ombre-nessie.png",
+         taille: 0.8, altitude: 0, distance: 3.5, cap: 0, indice: "vit dans l'eau", fx: "eau", gouttes: [6.15, 8.8] },
+  "3": { nom: "le Thunderbird", court: "Thunderbird", modele: "thunderbird.glb", image: "inventaire-thunderbird.webp", ombre: "ombre-thunderbird.png",
+         taille: 1.2, altitude: 0.8, distance: 3.5, cap: -60, indice: "crée de l'électricité", fx: "eclairs", cri: 3.25, son: "cri-thunderbird.m4a" },
+  "4": { nom: "le Barghest", court: "Barghest", modele: "barghest.glb", image: "inventaire-barghest.webp", ombre: "ombre-barghest.png",
+         taille: 1.0, altitude: 0, distance: 3.5, cap: 0, indice: "vit dans les endroits sombres", fx: "fumee" },
+  "5": { nom: "la Fée", court: "Fée", modele: "fee.glb", image: "inventaire-fee.webp", ombre: "ombre-fee.png",
+         taille: 0.6, altitude: 0.8, distance: 2.4, cap: 0, indice: "adore la musique", fx: "lueur", rire: 1.5 },
+  "6": { nom: "le Lutin vert", court: "Lutin vert", modele: "lutin-vert.glb", image: "inventaire-lutin-vert.webp", ombre: "ombre-lutin-vert.png",
+         taille: 0.9, altitude: 0, distance: 3, cap: 0, indice: "se cache dans les jardins", fx: "feuilles",
+         couleurs: [0x6fbf3a, 0x3e8f2a, 0xa5d65a], agite: [[0.3, 0.8], [1.9, 2.9], [3.9, 4.4], [4.9, 5.6]] },
+  "7": { nom: "le Lutin orange", court: "Lutin orange", modele: "lutin-orange.glb", image: "inventaire-lutin-orange.webp", ombre: "ombre-lutin-orange.png",
+         taille: 0.9, altitude: 0, distance: 3, cap: 0, indice: "adore les marrons", fx: "feuilles",
+         couleurs: [0xd9692b, 0xb8441e, 0xe8a03c], bonds: [0.5, 1.5] }
 };
-const DISTANCE = 4; // mètres entre le joueur et le monstre
+const YEUX = 1.2;   // hauteur du téléphone (mètres)
 /* ========================================= */
 
 const $ = id => document.getElementById(id);
 const ids = Object.keys(MONSTRES);
 const demande = new URLSearchParams(location.search).get("m");
-const id = MONSTRES[demande] ? demande : "1";
-const monstre = MONSTRES[id];
-$("nomMonstre").textContent = monstre.nom.replace(/^(le |la |l')/i, "");
+const id = MONSTRES[demande] ? demande : null;
+const monstre = id ? MONSTRES[id] : null;
 
 document.querySelectorAll(".ecran").forEach(e => e.prepend($("tpl-decor").content.cloneNode(true)));
 
-/* ---------- Piège (monstres déjà capturés, gardés sur ce téléphone) ---------- */
-function lirePris() { try { return JSON.parse(localStorage.getItem("monstresPris") || "[]"); } catch (e) { return []; } }
+/* ---------- Inventaire (gardé sur ce téléphone) ---------- */
+function lirePris() { try { return JSON.parse(localStorage.getItem("monstresPris") || "[]").filter(k => MONSTRES[k]); } catch (e) { return []; } }
 function noterPris() { const l = lirePris(); if (!l.includes(id)) l.push(id); try { localStorage.setItem("monstresPris", JSON.stringify(l)); } catch (e) {} }
 function dessinerPiege() {
-  const pris = lirePris().filter(k => MONSTRES[k]);
+  const pris = lirePris();
   document.querySelectorAll(".piege").forEach(p => {
-    p.querySelector(".piege-titre").textContent = "Piège : " + pris.length + " / " + ids.length;
+    p.querySelector(".piege-titre").textContent = "Inventaire : " + pris.length + " / " + ids.length;
     p.querySelector(".cases").innerHTML = ids.map(k =>
       '<div class="case' + (pris.includes(k) ? " prise" : "") + (k === id && !pris.includes(k) ? " actuelle" : "") +
-      '" title="' + MONSTRES[k].nom + '"><span>' + (pris.includes(k) ? "✓" : "?") + '</span></div>').join("");
+      '"><span>' + (pris.includes(k) ? "✓" : "?") + '</span></div>').join("");
   });
 }
+function dessinerInventaire() {
+  const pris = lirePris();
+  $("compteInventaire").textContent = pris.length + " / " + ids.length + " créatures capturées";
+  $("grille").innerHTML = ids.map((k, i) => {
+    const m = MONSTRES[k], ok = pris.includes(k), derniere = i === ids.length - 1 && ids.length % 2 ? " derniere" : "";
+    return '<div class="carte' + (ok ? " prise" : "") + derniere + '">' +
+      '<img alt="" loading="lazy" src="' + (ok ? m.image : m.ombre) + '"' + (ok ? "" : ' class="ombre"') + '>' +
+      '<div class="nom">' + (ok ? m.court : "???") + '</div>' +
+      '<div class="astuce">' + (ok ? "Capturé !" : "<b>Indice :</b> " + m.indice) + '</div></div>';
+  }).join("");
+}
+let ecranAvantInventaire = null;
+document.querySelectorAll(".ouvrir-inventaire").forEach(b => b.addEventListener("click", () => {
+  dessinerInventaire(); $("inventaire").hidden = false;
+}));
+$("fermerInventaire").addEventListener("click", () => { $("inventaire").hidden = true; });
 dessinerPiege();
 
+if (monstre) {
+  const deja = lirePris().includes(id);
+  $("intro").textContent = deja ? "Tu as déjà capturé " + monstre.nom + ". Tu peux le revoir avec l'œil magique."
+                                : "Une créature rôde tout près. Ouvre l'œil magique pour la voir.";
+  $("demarrer").hidden = false;
+  $("nomMonstre").textContent = monstre.court;
+}
+
+/* ---------- Sons (Web Audio, débloqués au premier toucher) ---------- */
+let audio = null; const sons = {};
+async function chargerSon(nom, url) {
+  try { const r = await fetch(url); sons[nom] = await audio.decodeAudioData(await r.arrayBuffer()); } catch (e) {}
+}
+function jouer(nom, volume = 1) {
+  if (!audio || !sons[nom]) return;
+  const s = audio.createBufferSource(), g = audio.createGain(); g.gain.value = volume;
+  s.buffer = sons[nom]; s.connect(g).connect(audio.destination); s.start();
+}
+
+/* ---------- Sigil (préchargé une fois, rejoué sans retélécharger) ---------- */
+let sigilBlob = null;
+fetch("sigil.webp").then(r => r.blob()).then(b => sigilBlob = b).catch(() => {});
+
+if (!monstre) { /* page d'accueil seule : rien d'autre à préparer */ }
+else {
+
 /* ---------- Scène 3D ---------- */
+const DEG = Math.PI / 180;
 const toile = $("vue");
 const rendu = new THREE.WebGLRenderer({ canvas: toile, alpha: true, antialias: true });
 rendu.setPixelRatio(Math.min(devicePixelRatio, 2));
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 100);
-camera.rotation.order = "YXZ";
 scene.add(new THREE.HemisphereLight(0xdff6ff, 0x1a2a2a, 2.2));
-const soleil = new THREE.DirectionalLight(0xffffff, 2.2); soleil.position.set(2, 4, 3); scene.add(soleil);
-const lueur = new THREE.PointLight(0x4ff3ff, 6, 6); lueur.position.set(-1, 0.5, 1); scene.add(lueur);
+const soleil = new THREE.DirectionalLight(0xffffff, 2.0); soleil.position.set(2, 4, 3); scene.add(soleil);
 
-const pivot = new THREE.Group();   // place du monstre dans le parc
-const corps = new THREE.Group();   // balancement
-pivot.add(corps); scene.add(pivot);
-pivot.visible = false;
-let cible = null, melangeur = null, nage = null, pret = false;
+const pivot = new THREE.Group();   // place de la créature dans le parc (regarde toujours le joueur)
+const corps = new THREE.Group();   // la créature (rétrécit à la capture)
+const effets = new THREE.Group();  // effets visuels, en mètres
+pivot.add(corps, effets); scene.add(pivot); pivot.visible = false;
+let cible = null, melangeur = null, action = null, pret = false, materiaux = [], hauteurReelle = monstre.taille;
 
 function redimensionner() {
   rendu.setSize(innerWidth, innerHeight, false);
@@ -233,87 +325,172 @@ function redimensionner() {
 }
 addEventListener("resize", redimensionner); redimensionner();
 
-function fantome() {
-  const c = document.createElement("canvas"); c.width = c.height = 256;
-  const g = c.getContext("2d"); g.scale(2.56, 2.56); g.translate(0, -5);
-  g.fillStyle = "rgba(232,255,253,.92)"; g.fill(new Path2D("M50 6C27 6 14 24 14 46v54l12-10 12 12 12-12 12 12 12-12 12 10V46C86 24 73 6 50 6z"));
-  g.fillStyle = "#04121a";
-  [[37, 44, 7, 10], [63, 44, 7, 10], [50, 66, 8, 6]].forEach(([x, y, rx, ry]) => { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fill(); });
-  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
-  return s;
-}
-
-function installer(objet) {
-  const boite = new THREE.Box3().setFromObject(objet);
-  const dims = boite.getSize(new THREE.Vector3()), centre = boite.getCenter(new THREE.Vector3());
-  objet.position.sub(centre);
+new GLTFLoader().load(monstre.modele, gltf => {
+  const objet = gltf.scene;
+  const boite = new THREE.Box3().setFromObject(objet), dims = boite.getSize(new THREE.Vector3()), centre = boite.getCenter(new THREE.Vector3());
+  objet.position.set(-centre.x, -boite.min.y, -centre.z);
   const enveloppe = new THREE.Group(); enveloppe.add(objet);
   const echelle = monstre.taille / (dims.y || 1);
-  enveloppe.scale.setScalar(echelle);
+  enveloppe.scale.setScalar(echelle); enveloppe.rotation.y = (monstre.cap || 0) * DEG;
   corps.add(enveloppe);
-  // zone de toucher un peu plus large que le monstre, pour les petits doigts
-  const rayon = Math.max(dims.x, dims.y, dims.z) * echelle * 0.65;
-  cible = new THREE.Mesh(new THREE.SphereGeometry(rayon, 12, 8), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }));
-  corps.add(cible);
+  objet.traverse(o => { if (o.isMesh) { o.frustumCulled = false; o.material = o.material.clone(); materiaux.push(o.material); } });
+  const rayonCible = Math.max(dims.x, dims.y, dims.z) * echelle * 0.6;
+  cible = new THREE.Mesh(new THREE.SphereGeometry(rayonCible, 12, 8), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }));
+  cible.position.y = monstre.taille / 2; corps.add(cible);
+  if (gltf.animations.length) { melangeur = new THREE.AnimationMixer(objet); action = melangeur.clipAction(gltf.animations[0]); action.play(); }
+  preparerEffets();
   pret = true; $("chargement").hidden = true;
-}
+}, ev => {
+  if (ev.total) $("chargement").textContent = "La créature approche… " + Math.round(ev.loaded / ev.total * 100) + " %";
+}, () => { $("chargement").textContent = "La créature n'a pas pu venir. Vérifie le réseau et recharge la page."; });
 
-/* ---------- Animation de nage (monstre du bassin, squelette Tripo) ---------- */
-function preparerNage(racine) {
-  const os = {}; racine.traverse(n => { if (n.isBone) os[n.name] = n; });
-  racine.updateMatrixWorld(true);
-  const reglages = [];
-  const ajouter = (nom, f) => {
-    const b = os[nom]; if (!b) return;
-    const pq = new THREE.Quaternion(); if (b.parent) b.parent.getWorldQuaternion(pq);
-    const x = b.getWorldPosition(new THREE.Vector3()).x;
-    reglages.push({ b, repos: b.quaternion.clone(), pq, pqi: pq.clone().invert(), cote: x < 0 ? -1 : 1, f });
-  };
-  // cou : ondulation et hochement
-  ["tripoHead_0", "tripoHead_1", "tripoHead_2", "tripoHead_3"].forEach((n, i) =>
-    ajouter(n, t => [Math.sin(t * .9 - i * .4) * .035, Math.sin(t * 1.2 - i * .5) * .07, 0]));
-  // queue
-  ["tripoTail_0", "tripoTail_1", "tripoTail_2"].forEach((n, i) =>
-    ajouter(n, t => [0, Math.sin(t * 1.5 - i * .6) * .18, 0]));
-  // nageoires avant et arrière (rame : battement + va-et-vient)
-  const rame = (amp, dephasage) => (t, cote) => {
-    const a = t * 2.2 + dephasage;
-    return [0, -cote * Math.cos(a) * .3 * amp, cote * Math.sin(a) * .35 * amp];
-  };
-  ajouter("bone_19", rame(1, 0)); ajouter("bone_21", rame(1, 0));
-  ajouter("bone_20", rame(.5, -.6)); ajouter("bone_22", rame(.5, -.6));
-  ajouter("bone_15", rame(.6, Math.PI)); ajouter("bone_17", rame(.6, Math.PI));
-  ajouter("bone_16", rame(.3, Math.PI - .6)); ajouter("bone_18", rame(.3, Math.PI - .6));
-  if (!reglages.length) return null;
-  const e = new THREE.Euler(), qm = new THREE.Quaternion();
-  return t => {
-    for (const r of reglages) {
-      const [x, y, z] = r.f(t, r.cote);
-      qm.setFromEuler(e.set(x, y, z));
-      // rotation exprimée dans les axes du monde, convertie dans l'espace du parent
-      r.b.quaternion.copy(r.pqi).multiply(qm).multiply(r.pq).multiply(r.repos);
+/* ---------- Textures des effets, dessinées à la volée ---------- */
+function texture(dessin, taille = 128) {
+  const c = document.createElement("canvas"); c.width = c.height = taille; dessin(c.getContext("2d"), taille);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const TEX = {
+  doux: texture((g, s) => { const r = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+    r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(.35, "rgba(255,255,255,.55)"); r.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = r; g.fillRect(0, 0, s, s); }),
+  feuille: texture((g, s) => { g.translate(s / 2, s / 2); g.fillStyle = "#fff";
+    g.beginPath(); g.moveTo(0, -s * .45); g.bezierCurveTo(s * .32, -s * .2, s * .3, s * .25, 0, s * .45); g.bezierCurveTo(-s * .3, s * .25, -s * .32, -s * .2, 0, -s * .45); g.fill();
+    g.strokeStyle = "rgba(0,0,0,.35)"; g.lineWidth = s * .03; g.beginPath(); g.moveTo(0, -s * .4); g.lineTo(0, s * .45); g.stroke(); }),
+  goutte: texture((g, s) => { g.translate(s / 2, s / 2);
+    const r = g.createRadialGradient(-s * .06, s * .08, 0, 0, s * .1, s * .3); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(1, "rgba(150,220,255,.6)");
+    g.fillStyle = r; g.beginPath(); g.moveTo(0, -s * .42); g.bezierCurveTo(s * .2, -s * .1, s * .28, s * .1, s * .22, s * .25);
+    g.arc(0, s * .2, s * .22, 0, Math.PI); g.bezierCurveTo(-s * .28, s * .1, -s * .2, -s * .1, 0, -s * .42); g.fill(); })
+};
+const ECLAIRS = Array.from({ length: 6 }, () => texture((g, s) => {
+  g.strokeStyle = "#e9fbff"; g.shadowColor = "#6fdcff"; g.shadowBlur = s * .06; g.lineCap = "round"; g.lineJoin = "round";
+  const branche = (x, y, a, l, w) => { g.lineWidth = w; g.beginPath(); g.moveTo(x, y);
+    for (let i = 0; i < 7; i++) { x += Math.sin(a) * l / 7 + (Math.random() - .5) * l * .18; y += Math.cos(a) * l / 7; g.lineTo(x, y);
+      if (w > 2 && Math.random() < .25) { g.stroke(); branche(x, y, a + (Math.random() - .5) * 1.6, l * .45, w * .5); g.lineWidth = w; g.beginPath(); g.moveTo(x, y); } }
+    g.stroke(); };
+  branche(s / 2, s * .04, (Math.random() - .5) * .5, s * .9, s * .035); branche(s / 2, s * .04, (Math.random() - .5) * .5, s * .9, s * .012);
+}, 256));
+
+/* ---------- Petit moteur de particules (sprites) ---------- */
+class Particules {
+  constructor(tex, max, { additif = false, couleur = 0xffffff } = {}) {
+    this.libres = []; this.actives = [];
+    for (let i = 0; i < max; i++) {
+      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color: couleur, transparent: true, depthWrite: false,
+        blending: additif ? THREE.AdditiveBlending : THREE.NormalBlending }));
+      s.visible = false; effets.add(s); this.libres.push(s);
     }
-  };
+  }
+  emettre(o) {
+    const s = this.libres.pop(); if (!s) return;
+    s.visible = true; s.position.copy(o.pos); s.material.color.set(o.couleur ?? s.material.color);
+    s.material.rotation = o.angle || 0; s.scale.setScalar(o.taille); s.material.opacity = 0;
+    s.u = { v: o.vit.clone(), vie: o.vie, age: 0, taille: o.taille, croit: o.croit || 0, tourne: o.tourne || 0, g: o.gravite || 0,
+            frein: o.frein || 0, opa: o.opacite ?? 1, apparait: o.apparait || 0.08 };
+    this.actives.push(s);
+  }
+  maj(dt) {
+    for (let i = this.actives.length - 1; i >= 0; i--) {
+      const s = this.actives[i], u = s.u; u.age += dt;
+      if (u.age >= u.vie) { s.visible = false; this.actives.splice(i, 1); this.libres.push(s); continue; }
+      u.v.y -= u.g * dt; u.v.multiplyScalar(1 - u.frein * dt); s.position.addScaledVector(u.v, dt);
+      s.material.rotation += u.tourne * dt;
+      const k = u.age / u.vie; s.scale.setScalar(u.taille * (1 + u.croit * k));
+      s.material.opacity = u.opa * Math.min(1, u.age / u.apparait) * (1 - k * k);
+    }
+  }
 }
+const alea = (a, b) => a + Math.random() * (b - a);
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+const passe = (avant, maintenant, e) => maintenant >= avant ? (e > avant && e <= maintenant) : (e > avant || e <= maintenant);
 
-if (monstre.modele) {
-  new GLTFLoader().load(monstre.modele, gltf => {
-    installer(gltf.scene);
-    if (gltf.animations.length) { melangeur = new THREE.AnimationMixer(gltf.scene); gltf.animations.forEach(a => melangeur.clipAction(a).play()); }
-    else if (monstre.nage) nage = preparerNage(gltf.scene);
-  }, ev => {
-    if (ev.total) $("chargement").textContent = "Le monstre approche… " + Math.round(ev.loaded / ev.total * 100) + " %";
-  }, () => { $("chargement").textContent = "Le monstre n'a pas pu venir. Vérifie le réseau et recharge la page."; });
-} else {
-  installer(fantome());
+/* ---------- Effets propres à chaque créature ---------- */
+let majEffets = () => {}, opaciteCorps = 1, apparition = null;
+function preparerEffets() {
+  const T = monstre.taille, systemes = [];
+  const maj = f => { majEffets = (dt, t, tp) => { systemes.forEach(s => s.maj(dt)); f(dt, t, tp); }; };
+  const nouveau = (...a) => { const p = new Particules(...a); systemes.push(p); return p; };
+
+  if (monstre.fx === "lumiere") {           // Mothman : lumière douce devant lui
+    const orbe = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.doux, color: 0xfff2c4, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    orbe.position.set(0, T * 0.62, 0.75); effets.add(orbe);
+    const lampe = new THREE.PointLight(0xffe6a8, 0, 3); lampe.position.copy(orbe.position); effets.add(lampe);
+    const poussiere = nouveau(TEX.doux, 30, { additif: true, couleur: 0xffe9b0 });
+    maj((dt, t) => {
+      const allume = Math.min(1, Math.max(0, (t - 1.9) / 0.5)) * (1 - Math.min(1, Math.max(0, (t - 5.4) / 0.5)));
+      const pulse = 1 + 0.08 * Math.sin(performance.now() / 180);
+      orbe.scale.setScalar(T * 0.42 * (0.4 + 0.6 * allume) * pulse); orbe.material.opacity = 0.25 + 0.75 * allume; lampe.intensity = 3 * allume;
+      if (Math.random() < dt * 14 * allume) poussiere.emettre({ pos: orbe.position.clone().add(V3(alea(-.1, .1), alea(-.1, .1), alea(-.1, .1))),
+        vit: V3(alea(-.08, .08), alea(.02, .12), alea(-.08, .08)), vie: alea(1, 2), taille: alea(.02, .045) });
+    });
+  }
+  if (monstre.fx === "eau") {               // Nessie : projections de gouttes
+    const gouttes = nouveau(TEX.goutte, 90, { couleur: 0xbfeaff });
+    const gerbe = (n, force) => { for (let i = 0; i < n; i++) { const a = alea(0, Math.PI * 2), r = alea(.15, .6) * T;
+      gouttes.emettre({ pos: V3(Math.cos(a) * r * .6, alea(0, .15), Math.sin(a) * r * .6), vit: V3(Math.cos(a) * alea(.4, 1.4), alea(1.2, 2.6) * force, Math.sin(a) * alea(.4, 1.4)),
+        vie: alea(.7, 1.3), taille: alea(.04, .08), gravite: 4.5 }); } };
+    maj((dt, t, tp) => {
+      (monstre.gouttes || []).forEach(e => { if (passe(tp, t, e)) gerbe(45, 1); });
+      if (Math.random() < dt * 3) gouttes.emettre({ pos: V3(alea(-.4, .4) * T, alea(.1, .4) * T, alea(-.4, .4) * T), vit: V3(0, alea(.1, .4), 0), vie: .6, taille: .035, gravite: 3 });
+    });
+  }
+  if (monstre.fx === "eclairs") {           // Thunderbird : éclairs autour de lui
+    const flash = new THREE.PointLight(0x9fe8ff, 0, 5); flash.position.set(0, T * .6, .5); effets.add(flash);
+    const bolts = ECLAIRS.map(tex => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+      s.visible = false; s.vie = 0; effets.add(s); return s; });
+    const lancer = () => { const s = bolts.find(b => b.vie <= 0); if (!s) return; const a = alea(0, Math.PI * 2), r = alea(.35, .75) * T;
+      s.position.set(Math.cos(a) * r, alea(.2, 1.1) * T, Math.sin(a) * r * .5); s.scale.setScalar(alea(.35, .7) * T);
+      s.material.rotation = alea(-.7, .7); s.vie = alea(.08, .18); s.visible = true; };
+    let cri = 0;
+    maj((dt, t, tp) => {
+      if (monstre.cri != null && passe(tp, t, monstre.cri)) { cri = 1.2; jouer("cri", .9); for (let i = 0; i < 4; i++) lancer(); }
+      cri = Math.max(0, cri - dt);
+      if (Math.random() < dt * (cri > 0 ? 14 : 2.5)) lancer();
+      let on = 0; bolts.forEach(b => { if (b.vie > 0) { b.vie -= dt; on++; b.material.opacity = Math.random() < .3 ? .4 : 1; if (b.vie <= 0) b.visible = false; } });
+      flash.intensity = on ? 4 + Math.random() * 4 : 0;
+    });
+  }
+  if (monstre.fx === "fumee") {             // Barghest : brume, et apparition progressive
+    const fumee = nouveau(TEX.doux, 70, { couleur: 0x8fb3b0 });
+    const bouffee = (n, dense) => { for (let i = 0; i < n; i++) fumee.emettre({
+      pos: V3(alea(-.5, .5) * T * .8, alea(0, .5) * T, alea(-.5, .5) * T), vit: V3(alea(-.08, .08), alea(.04, .16), alea(-.08, .08)),
+      vie: alea(2.5, 4.5), taille: alea(.35, .6) * T, croit: 1.2, opacite: dense ? .55 : .3, apparait: .8, tourne: alea(-.2, .2), angle: alea(0, 6) }); };
+    opaciteCorps = 0; apparition = { debut: null };
+    maj((dt) => {
+      if (Math.random() < dt * 6) bouffee(1, false);
+      if (apparition.debut === null && enVue()) { apparition.debut = performance.now(); bouffee(18, true); }
+      if (apparition.debut !== null) opaciteCorps = Math.min(1, (performance.now() - apparition.debut) / 2500);
+    });
+  }
+  if (monstre.fx === "lueur") {             // Fée : elle brille
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.doux, color: 0x9fe6ff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    halo.position.set(0, T * .55, -.05); effets.add(halo);
+    const lampe = new THREE.PointLight(0xb8f0ff, 2.5, 2.5); lampe.position.set(0, T * .6, .4); effets.add(lampe);
+    const etincelles = nouveau(TEX.doux, 50, { additif: true, couleur: 0xd9f8ff });
+    maj((dt, t, tp) => {
+      const p = 1 + .12 * Math.sin(performance.now() / 260);
+      halo.scale.setScalar(T * 2.2 * p); halo.material.opacity = .55 + .2 * Math.sin(performance.now() / 410);
+      const n = monstre.rire != null && passe(tp, t, monstre.rire) ? 22 : (Math.random() < dt * 10 ? 1 : 0);
+      for (let i = 0; i < n; i++) etincelles.emettre({ pos: V3(alea(-.35, .35) * T, alea(.2, .9) * T, alea(-.2, .2) * T),
+        vit: V3(alea(-.15, .15), alea(.05, .35), alea(-.15, .15)), vie: alea(.8, 1.6), taille: alea(.025, .05) });
+    });
+  }
+  if (monstre.fx === "feuilles") {          // Lutins : feuilles qui s'envolent quand ils bougent
+    const feuilles = nouveau(TEX.feuille, 60);
+    const envol = () => feuilles.emettre({ pos: V3(alea(-.3, .3) * T, alea(0, .35) * T, alea(-.25, .25) * T),
+      vit: V3(alea(-.6, .6), alea(.5, 1.3), alea(-.4, .4)), vie: alea(1.4, 2.4), taille: alea(.05, .09), gravite: .9, frein: .6,
+      tourne: alea(-6, 6), angle: alea(0, 6), couleur: monstre.couleurs[Math.floor(Math.random() * monstre.couleurs.length)] });
+    maj((dt, t, tp) => {
+      const bouge = (monstre.agite || []).some(([a, b]) => t >= a && t <= b);
+      if (Math.random() < dt * (bouge ? 9 : 1)) envol();
+      (monstre.bonds || []).forEach(e => { if (passe(tp, t, e)) for (let i = 0; i < 6; i++) envol(); });
+    });
+  }
 }
 
 /* ---------- Mouvements du téléphone ---------- */
-const DEG = Math.PI / 180, axeZ = new THREE.Vector3(0, 0, 1), qEcran = new THREE.Quaternion();
+const axeZ = new THREE.Vector3(0, 0, 1), qEcran = new THREE.Quaternion();
 const qRedresse = new THREE.Quaternion(-Math.sqrt(.5), 0, 0, Math.sqrt(.5)), eulerTel = new THREE.Euler();
 let gyro = false, angleMonstre = null, pris = false;
-
 function orientation(e) {
   if (e.alpha == null || e.beta == null) return;
   gyro = true;
@@ -321,41 +498,45 @@ function orientation(e) {
   eulerTel.set(e.beta * DEG, e.alpha * DEG, -e.gamma * DEG, "YXZ");
   camera.quaternion.setFromEuler(eulerTel).multiply(qRedresse).multiply(qEcran.setFromAxisAngle(axeZ, -ecran * DEG));
   if (angleMonstre == null) {
-    // le monstre se cache sur le côté ou derrière : il faut tourner pour le trouver
     const avant = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-    const cap = Math.atan2(-avant.x, -avant.z);
-    angleMonstre = cap + (Math.random() < .5 ? -1 : 1) * (70 + Math.random() * 90) * DEG;
+    angleMonstre = Math.atan2(-avant.x, -avant.z) + (Math.random() < .5 ? -1 : 1) * (70 + Math.random() * 90) * DEG;
   }
+}
+const dansCamera = new THREE.Vector3(), proj = new THREE.Vector3();
+function enVue() {
+  const c = pivot.position.clone(); c.y += monstre.taille / 2;
+  dansCamera.copy(c).applyMatrix4(camera.matrixWorldInverse); proj.copy(c).project(camera);
+  return dansCamera.z < 0 && Math.abs(proj.x) < .8 && Math.abs(proj.y) < .9;
 }
 
 /* ---------- Boucle d'animation ---------- */
-const horloge = new THREE.Clock(), dansCamera = new THREE.Vector3();
-let finCapture = 0;
+const horloge = new THREE.Clock();
+let finCapture = 0, tPrec = 0;
 function boucle() {
-  const dt = horloge.getDelta(), t = horloge.elapsedTime;
-  if (melangeur) melangeur.update(dt);
-  if (nage && !pris) nage(t);
+  const dt = Math.min(horloge.getDelta(), .1), t = horloge.elapsedTime;
+  if (melangeur && !pris) melangeur.update(dt);
   if (pret) {
     pivot.visible = true;
+    const D = monstre.distance || 3.5, sol = -YEUX + (monstre.altitude || 0);
     if (gyro && angleMonstre != null) {
-      const a = angleMonstre + Math.sin(t * .3) * .12;
-      pivot.position.set(-Math.sin(a) * DISTANCE, monstre.hauteur, -Math.cos(a) * DISTANCE);
+      const a = angleMonstre + Math.sin(t * .25) * .08;
+      pivot.position.set(-Math.sin(a) * D, sol, -Math.cos(a) * D);
     } else if (!gyro) {
       camera.quaternion.identity();
-      pivot.position.set(Math.sin(t * .5) * 0.6, monstre.hauteur + 0.6 + Math.sin(t * .8) * .25, -DISTANCE);
+      pivot.position.set(Math.sin(t * .4) * .5, sol + .5, -D);
     }
-    if (!pris) {
-      pivot.lookAt(camera.position.x, pivot.position.y, camera.position.z);
-      corps.position.y = Math.sin(t * 1.6) * .06 * monstre.taille;
-      corps.rotation.z = Math.sin(t * 1.1) * .05;
-    } else {
-      const k = Math.min(1, (performance.now() - finCapture) / 700);
-      corps.scale.setScalar(Math.max(.01, 1 - k));
-      corps.rotation.y += dt * 14;
+    pivot.lookAt(camera.position.x, pivot.position.y, camera.position.z);
+    const tAnim = action ? action.time : t;
+    if (!pris) majEffets(dt, tAnim, tPrec); else effets.children.forEach(o => { if (o.material) o.material.opacity *= .9; });
+    tPrec = tAnim;
+    if (materiaux.length) { const o = pris ? Math.max(0, 1 - (performance.now() - finCapture) / 1400) : opaciteCorps;
+      materiaux.forEach(m => { m.transparent = o < 1; m.opacity = o; }); }
+    if (pris) {
+      const k = Math.min(1, (performance.now() - finCapture) / 1400);
+      corps.scale.setScalar(Math.max(.01, 1 - k)); corps.rotation.y += dt * 12 * k; corps.position.y = monstre.taille * .5 * k;
     }
-    // flèches vers le monstre quand il n'est pas à l'écran
-    dansCamera.copy(pivot.position).applyMatrix4(camera.matrixWorldInverse);
-    const proj = pivot.position.clone().project(camera);
+    const c = pivot.position.clone(); c.y += monstre.taille / 2;
+    dansCamera.copy(c).applyMatrix4(camera.matrixWorldInverse); proj.copy(c).project(camera);
     const horsChamp = dansCamera.z > 0 || Math.abs(proj.x) > 1.05;
     $("gauche").hidden = pris || !horsChamp || dansCamera.x >= 0;
     $("droite").hidden = pris || !horsChamp || dansCamera.x < 0;
@@ -367,7 +548,7 @@ function boucle() {
 /* ---------- Capture ---------- */
 const rayon = new THREE.Raycaster(), doigt = new THREE.Vector2();
 toile.addEventListener("pointerdown", e => {
-  if (!pret || pris || !cible) return;
+  if (!pret || pris || !cible || opaciteCorps < .5) return;
   doigt.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   rayon.setFromCamera(doigt, camera);
   if (rayon.intersectObject(cible, false).length) capturer();
@@ -376,24 +557,33 @@ toile.addEventListener("pointerdown", e => {
 function capturer() {
   pris = true; finCapture = performance.now();
   if (navigator.vibrate) navigator.vibrate(120);
-  $("eclair").classList.add("flash");
+  jouer("sigil");
+  // le sigil s'ouvre sur la créature
+  const c = pivot.position.clone(); c.y += monstre.taille / 2; c.project(camera);
+  const s = $("sigil");
+  s.style.left = ((c.x + 1) / 2 * innerWidth) + "px"; s.style.top = ((1 - c.y) / 2 * innerHeight) + "px";
+  if (sigilBlob) { if (s.src) URL.revokeObjectURL(s.src); s.src = URL.createObjectURL(sigilBlob); s.hidden = false; }
+  else $("eclair").classList.add("flash");
   noterPris(); dessinerPiege();
-  const n = lirePris().filter(k => MONSTRES[k]).length;
+  $("portrait").src = monstre.image;
+  setTimeout(() => $("eclair").classList.add("flash"), 2100);
   setTimeout(() => {
-    $("compteur").textContent = n >= ids.length
-      ? "Tu as attrapé " + monstre.nom + ". Tous les monstres sont dans ton piège !"
-      : "Tu as attrapé " + monstre.nom + ". Plus que " + (ids.length - n) + " à trouver.";
-    $("indice").textContent = monstre.indice;
+    s.hidden = true;
+    const n = lirePris().length;
+    $("compteur").textContent = n >= ids.length ? "Tu as attrapé " + monstre.nom + " !" :
+      "Tu as attrapé " + monstre.nom + ". Plus que " + (ids.length - n) + " à trouver : regarde les indices dans ton inventaire.";
+    $("final").hidden = n < ids.length;
     $("victoire").hidden = false;
-  }, 900);
+  }, 2900);
 }
 
 /* ---------- Démarrage ---------- */
 function erreur(msg) { $("erreur").textContent = msg; $("erreur").hidden = false; }
-const PERDU = "Suis-le des yeux et touche-le quand il apparaît !";
+const PERDU = "Suis-la des yeux et touche-la quand elle apparaît !";
 
 $("demarrer").addEventListener("click", async () => {
-  // iOS : la demande d'accès aux mouvements doit partir directement du toucher
+  // iOS : sons et mouvements doivent être demandés directement au toucher
+  try { audio = new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); chargerSon("sigil", "sigil.m4a"); if (monstre.son) chargerSon("cri", monstre.son); } catch (e) {}
   let attenteGyro = Promise.resolve("granted");
   if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
     attenteGyro = DeviceOrientationEvent.requestPermission().catch(() => "denied");
@@ -411,14 +601,19 @@ $("demarrer").addEventListener("click", async () => {
   if ((await attenteGyro) === "granted") addEventListener("deviceorientation", orientation);
   else $("consigne").textContent = PERDU;
   setTimeout(() => { if (!gyro) $("consigne").textContent = PERDU; }, 1500);
+  if (monstre.fx === "fumee") setTimeout(() => { if ($("consigne").textContent !== PERDU) $("consigne").textContent = "Cherche la brume… il apparaît quand tu le regardes."; }, 1600);
   $("chargement").hidden = pret;
   $("accueil").hidden = true; $("scene").hidden = false;
+  new Image().src = monstre.image;   // précharge le portrait
   redimensionner();
   requestAnimationFrame(boucle);
 });
 
 // pour les tests sur ordinateur, sans caméra
 window.__demarrerSansCamera = () => { $("accueil").hidden = true; $("scene").hidden = false; redimensionner(); requestAnimationFrame(boucle); };
+window.__capturer = () => capturer();
+}
 </script>
+
 </body>
 </html>
