@@ -129,6 +129,10 @@
   .carte .astuce b { color: var(--citrouille); font-weight: 600; }
   .carte.derniere { grid-column: 1 / -1; max-width: 50%; justify-self: center; width: 100%; }
   .piege { cursor: pointer; }
+  .raz { margin-top: 6px; background: none; border: 0; color: #7fa9ae; font: inherit; font-size: .95rem; text-decoration: underline; padding: 8px; }
+  #viseur { position: absolute; left: 50%; top: 45%; width: 62vmin; height: 62vmin; transform: translate(-50%, -50%);
+    border: 3px solid var(--cyan); border-radius: 28px; box-shadow: 0 0 0 100vmax rgba(4,18,26,.35), 0 0 22px var(--cyan) inset, 0 0 22px var(--cyan);
+    animation: pouls 1.4s ease-in-out infinite; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -173,6 +177,7 @@
   <div id="chargement" hidden>La créature approche…</div>
   <div id="gauche" class="fleche" hidden>❮</div>
   <div id="droite" class="fleche" hidden>❯</div>
+  <div id="viseur" hidden></div>
   <div id="nomMonstre" class="planche hud-haut"></div>
   <div id="consigne" class="consigne">Tourne sur toi-même pour la trouver, puis touche-la !</div>
   <div class="piege ouvrir-inventaire"><div class="piege-titre"></div><div class="cases"></div></div>
@@ -186,7 +191,8 @@
     <img id="portrait" class="portrait" alt="">
     <p id="compteur"></p>
     <p id="final" class="final" hidden>Bravo ! Les sept créatures sont dans ton piège. Va montrer ton inventaire au maître du jeu pour recevoir le trésor.</p>
-    <div class="boutons"><button class="planche petit ouvrir-inventaire" type="button">Mon inventaire</button></div>
+    <div class="boutons"><button class="planche petit ouvrir-inventaire" type="button">Mon inventaire</button>
+      <button id="autre" class="planche petit" type="button">Chercher une autre créature</button></div>
   </div>
 </div>
 
@@ -196,9 +202,11 @@
     <div class="compte" id="compteInventaire"></div>
     <div class="grille" id="grille"></div>
     <button id="fermerInventaire" class="planche petit" type="button">Fermer</button>
+    <button id="raz" class="raz" type="button">Remettre l'inventaire à zéro</button>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
@@ -242,14 +250,16 @@ const YEUX = 1.2;   // hauteur du téléphone (mètres)
 const $ = id => document.getElementById(id);
 const ids = Object.keys(MONSTRES);
 const demande = new URLSearchParams(location.search).get("m");
-const id = MONSTRES[demande] ? demande : null;
-const monstre = id ? MONSTRES[id] : null;
+let id = MONSTRES[demande] ? demande : null;
+let monstre = id ? MONSTRES[id] : null;
 
 document.querySelectorAll(".ecran").forEach(e => e.prepend($("tpl-decor").content.cloneNode(true)));
 
 /* ---------- Inventaire (gardé sur ce téléphone) ---------- */
-function lirePris() { try { return JSON.parse(localStorage.getItem("monstresPris") || "[]").filter(k => MONSTRES[k]); } catch (e) { return []; } }
-function noterPris() { const l = lirePris(); if (!l.includes(id)) l.push(id); try { localStorage.setItem("monstresPris", JSON.stringify(l)); } catch (e) {} }
+const CLE = "chasseMonstres-inventaire-v2";
+try { localStorage.removeItem("monstresPris"); } catch (e) {}
+function lirePris() { try { return JSON.parse(localStorage.getItem(CLE) || "[]").filter(k => MONSTRES[k]); } catch (e) { return []; } }
+function noterPris() { const l = lirePris(); if (!l.includes(id)) l.push(id); try { localStorage.setItem(CLE, JSON.stringify(l)); } catch (e) {} }
 function dessinerPiege() {
   const pris = lirePris();
   document.querySelectorAll(".piege").forEach(p => {
@@ -275,15 +285,24 @@ document.querySelectorAll(".ouvrir-inventaire").forEach(b => b.addEventListener(
   dessinerInventaire(); $("inventaire").hidden = false;
 }));
 $("fermerInventaire").addEventListener("click", () => { $("inventaire").hidden = true; });
+$("autre").addEventListener("click", () => { location.href = location.pathname; });
+$("raz").addEventListener("click", () => {
+  const b = $("raz");
+  if (!b.dataset.confirme) { b.dataset.confirme = "1"; b.textContent = "Touche encore pour tout effacer"; setTimeout(() => { delete b.dataset.confirme; b.textContent = "Remettre l'inventaire à zéro"; }, 4000); return; }
+  try { localStorage.removeItem(CLE); } catch (e) {}
+  delete b.dataset.confirme; b.textContent = "Inventaire remis à zéro"; dessinerInventaire(); dessinerPiege();
+});
 dessinerPiege();
 
 if (monstre) {
   const deja = lirePris().includes(id);
   $("intro").textContent = deja ? "Tu as déjà capturé " + monstre.nom + ". Tu peux le revoir avec l'œil magique."
                                 : "Une créature rôde tout près. Ouvre l'œil magique pour la voir.";
-  $("demarrer").hidden = false;
   $("nomMonstre").textContent = monstre.court;
+} else {
+  $("intro").textContent = "Ouvre l'œil magique et vise le QR code d'une créature cachée dans le parc.";
 }
+$("demarrer").hidden = false;
 
 /* ---------- Sons (Web Audio, débloqués au premier toucher) ---------- */
 let audio = null; const sons = {};
@@ -300,8 +319,8 @@ function jouer(nom, volume = 1) {
 let sigilBlob = null;
 fetch("sigil.webp").then(r => r.blob()).then(b => sigilBlob = b).catch(() => {});
 
-if (!monstre) { /* page d'accueil seule : rien d'autre à préparer */ }
-else {
+let gyroAutorise = false;
+function lancerChasse() {
 
 /* ---------- Scène 3D ---------- */
 const DEG = Math.PI / 180;
@@ -577,13 +596,28 @@ function capturer() {
   }, 2900);
 }
 
-/* ---------- Démarrage ---------- */
+/* ---------- Démarrage de la chasse ---------- */
+  if (monstre.son) chargerSon("cri", monstre.son);
+  $("nomMonstre").textContent = monstre.court;
+  if (gyroAutorise) addEventListener("deviceorientation", orientation);
+  else $("consigne").textContent = PERDU;
+  setTimeout(() => { if (!gyro) $("consigne").textContent = PERDU; }, 1500);
+  if (monstre.fx === "fumee") setTimeout(() => { if ($("consigne").textContent !== PERDU) $("consigne").textContent = "Cherche la brume… il apparaît quand tu le regardes."; }, 1600);
+  $("chargement").hidden = pret;
+  $("accueil").hidden = true; $("scene").hidden = false;
+  new Image().src = monstre.image;   // précharge le portrait
+  redimensionner();
+  requestAnimationFrame(boucle);
+  window.__capturer = () => capturer();
+}
+
+/* ---------- Ouverture de l'œil ---------- */
 function erreur(msg) { $("erreur").textContent = msg; $("erreur").hidden = false; }
 const PERDU = "Suis-la des yeux et touche-la quand elle apparaît !";
 
 $("demarrer").addEventListener("click", async () => {
   // iOS : sons et mouvements doivent être demandés directement au toucher
-  try { audio = new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); chargerSon("sigil", "sigil.m4a"); if (monstre.son) chargerSon("cri", monstre.son); } catch (e) {}
+  try { audio = new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); chargerSon("sigil", "sigil.m4a"); } catch (e) {}
   let attenteGyro = Promise.resolve("granted");
   if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
     attenteGyro = DeviceOrientationEvent.requestPermission().catch(() => "denied");
@@ -598,21 +632,41 @@ $("demarrer").addEventListener("click", async () => {
   } catch (e) {
     return erreur("Caméra refusée. Autorise la caméra pour ce site dans les réglages de Safari, puis recharge la page.");
   }
-  if ((await attenteGyro) === "granted") addEventListener("deviceorientation", orientation);
-  else $("consigne").textContent = PERDU;
-  setTimeout(() => { if (!gyro) $("consigne").textContent = PERDU; }, 1500);
-  if (monstre.fx === "fumee") setTimeout(() => { if ($("consigne").textContent !== PERDU) $("consigne").textContent = "Cherche la brume… il apparaît quand tu le regardes."; }, 1600);
-  $("chargement").hidden = pret;
-  $("accueil").hidden = true; $("scene").hidden = false;
-  new Image().src = monstre.image;   // précharge le portrait
-  redimensionner();
-  requestAnimationFrame(boucle);
+  gyroAutorise = (await attenteGyro) === "granted";
+  if (monstre) lancerChasse(); else scanner();
 });
 
-// pour les tests sur ordinateur, sans caméra
-window.__demarrerSansCamera = () => { $("accueil").hidden = true; $("scene").hidden = false; redimensionner(); requestAnimationFrame(boucle); };
-window.__capturer = () => capturer();
+/* ---------- Œil en mode recherche : lecture des QR codes ---------- */
+function scanner() {
+  $("accueil").hidden = true; $("scene").hidden = false; $("viseur").hidden = false;
+  $("nomMonstre").textContent = "Œil magique";
+  $("consigne").textContent = "Vise le QR code d'une créature.";
+  const video = $("camera"), toile = document.createElement("canvas"), g = toile.getContext("2d", { willReadFrequently: true });
+  const lire = () => {
+    if (video.videoWidth && window.jsQR) {
+      const l = 480, h = Math.round(l * video.videoHeight / video.videoWidth);
+      toile.width = l; toile.height = h; g.drawImage(video, 0, 0, l, h);
+      const code = jsQR(g.getImageData(0, 0, l, h).data, l, h, { inversionAttempts: "dontInvert" });
+      if (code && code.data) {
+        let k = null; try { k = new URL(code.data, location.href).searchParams.get("m"); } catch (e) {}
+        if (k && MONSTRES[k]) {
+          if (navigator.vibrate) navigator.vibrate(80);
+          id = k; monstre = MONSTRES[k];
+          history.replaceState(null, "", "?m=" + k);
+          $("viseur").hidden = true; dessinerPiege();
+          $("consigne").textContent = "Tourne sur toi-même pour la trouver, puis touche-la !";
+          lancerChasse(); return;
+        }
+        $("consigne").textContent = "Ce QR code n'appartient pas à la chasse.";
+      }
+    }
+    setTimeout(lire, 200);
+  };
+  lire();
 }
+
+// pour les tests sur ordinateur, sans caméra
+window.__demarrerSansCamera = () => { gyroAutorise = false; lancerChasse(); };
 </script>
 
 </body>
