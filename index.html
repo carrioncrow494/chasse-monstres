@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Chasse aux monstres</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&family=Grenze:wght@400;600&display=swap">
+<style>
+  /* Cimetière bleu-vert nocturne : cadre de pierre, planches sombres à lueur cyan, emplacements de piège en bas */
+  :root {
+    --abysse: #04121a;
+    --lagon: #0f4a57;
+    --halo: #2a9aa6;
+    --pierre: #2b5a63;
+    --pierre-ombre: #0a262e;
+    --cyan: #4ff3ff;
+    --menthe: #9dffc8;
+    --brume: #d8f7f5;
+    --citrouille: #ffb04a;
+    --planche: #06141a;
+    --titre: "Creepster", "Chiller", fantasy;
+    --texte: "Grenze", Georgia, serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; overflow: hidden; background: var(--abysse); color: var(--brume);
+    font-family: var(--texte); touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+  video { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  #scene { position: fixed; inset: 0; overflow: hidden; }
+
+  /* ---------- Décor des écrans ---------- */
+  .ecran { position: fixed; inset: 0; overflow: hidden;
+    background: radial-gradient(ellipse 70% 55% at 50% 48%, var(--halo) 0%, var(--lagon) 38%, var(--abysse) 85%); }
+  .ecran.voile { background: radial-gradient(ellipse 70% 55% at 50% 48%, rgba(42,154,166,.85) 0%, rgba(15,74,87,.9) 40%, rgba(4,18,26,.97) 85%); }
+  .decor, .cadre { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .decor { opacity: .55; }
+  .contenu { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 22px; padding: calc(56px + env(safe-area-inset-top, 0px)) 36px calc(120px + env(safe-area-inset-bottom, 0px)); text-align: center; }
+
+  h1, .titre { margin: 0; font-family: var(--titre); font-weight: 400; line-height: .95; letter-spacing: .04em;
+    text-wrap: balance; background: linear-gradient(180deg, var(--menthe) 10%, #3fd6b4 60%, #1d8f86 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 3px 0 var(--abysse)) drop-shadow(0 0 14px rgba(79,243,255,.45)); }
+  h1 { font-size: clamp(3rem, 15vw, 5rem); }
+  .titre { font-size: clamp(3.2rem, 17vw, 5.5rem); }
+  .ecran p { margin: 0; max-width: 28ch; font-size: 1.2rem; line-height: 1.4; text-shadow: 0 2px 6px var(--abysse); }
+
+  /* Planche sombre à volutes */
+  .planche { position: relative; min-width: 240px; padding: 16px 34px 14px; border: 2px solid rgba(79,243,255,.55);
+    border-radius: 30px 12px 28px 14px / 22px 28px 16px 26px; color: var(--cyan);
+    background: linear-gradient(180deg, #102a33 0%, var(--planche) 55%, #020a0e 100%);
+    box-shadow: 0 6px 0 #01080b, 0 0 18px rgba(79,243,255,.35), inset 0 1px 0 rgba(157,255,200,.25);
+    font-family: var(--titre); font-size: 1.7rem; letter-spacing: .08em; text-shadow: 0 0 10px var(--cyan); }
+  .planche::before, .planche::after { content: ""; position: absolute; width: 26px; height: 26px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Cpath d='M13 13m-1.5 0a1.5 1.5 0 1 1 3 0a3.5 3.5 0 1 1-7 0a5.5 5.5 0 1 1 11 0a7.5 7.5 0 1 1-15 0a9.5 9.5 0 0 1 9-9.5' fill='none' stroke='%237fe9f0' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
+    filter: drop-shadow(0 0 3px rgba(79,243,255,.8)); }
+  .planche::before { left: -11px; bottom: -9px; transform: rotate(160deg); }
+  .planche::after { right: -11px; top: -9px; }
+  button.planche { cursor: pointer; transition: transform .12s, box-shadow .12s; }
+  button.planche:active { transform: translateY(4px); box-shadow: 0 2px 0 #01080b, 0 0 24px rgba(79,243,255,.6); }
+  button:focus-visible { outline: 3px solid var(--menthe); outline-offset: 5px; }
+
+  .indice { font-family: var(--texte); font-weight: 600; font-size: 1.3rem; letter-spacing: 0; color: var(--brume);
+    text-shadow: none; max-width: 30ch; min-width: 0; line-height: 1.3; }
+  .indice small { display: block; margin-bottom: 4px; font-family: var(--titre); font-weight: 400; font-size: 1rem;
+    letter-spacing: .12em; color: var(--citrouille); text-shadow: 0 0 8px rgba(255,176,74,.6); }
+  #erreur { color: var(--citrouille); }
+
+  /* ---------- Emplacements du piège ---------- */
+  .piege { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-direction: column; align-items: center;
+    gap: 8px; padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(180deg, transparent, rgba(2,10,14,.85) 35%); }
+  .piege-titre { font-family: var(--titre); font-size: 1rem; letter-spacing: .14em; color: var(--menthe); font-variant-numeric: tabular-nums; }
+  .cases { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .case { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px;
+    border: 2px solid #3a6f78; background: radial-gradient(circle at 40% 35%, #2c5961, #0b252c 75%);
+    box-shadow: 0 3px 0 #01080b, inset 0 0 8px rgba(0,0,0,.6); transform: rotate(45deg) scale(.82); }
+  .case span { transform: rotate(-45deg); font-family: var(--titre); font-size: 1.3rem; color: #6d9aa1; }
+  .case.prise { border-color: var(--cyan); background: radial-gradient(circle, #3ee0e8, #0e5a66 70%);
+    box-shadow: 0 3px 0 #01080b, 0 0 14px var(--cyan); }
+  .case.prise span { color: var(--abysse); }
+  .case.actuelle { animation: appel 1.2s ease-in-out infinite; }
+  @keyframes appel { 50% { box-shadow: 0 3px 0 #01080b, 0 0 18px var(--citrouille); border-color: var(--citrouille); } }
+
+  /* ---------- Chasse en cours ---------- */
+  #vue { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  #chargement { position: absolute; top: 50%; left: 16px; right: 16px; transform: translateY(-50%); text-align: center;
+    font-family: var(--titre); font-size: 1.4rem; letter-spacing: .08em; color: var(--cyan); text-shadow: 0 0 10px var(--abysse); }
+  .hud-haut { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+    min-width: 0; max-width: calc(100% - 32px); font-size: 1.25rem; padding: 10px 26px 8px; white-space: nowrap; }
+  .consigne { position: absolute; left: 16px; right: 16px; bottom: calc(118px + env(safe-area-inset-bottom, 0px));
+    text-align: center; font-size: 1.15rem; text-shadow: 0 0 6px var(--abysse), 0 2px 4px var(--abysse); }
+  .fleche { position: absolute; top: 50%; font-family: var(--titre); font-size: 4rem; color: var(--cyan);
+    text-shadow: 0 0 14px var(--cyan); transform: translateY(-50%); animation: pouls 1s ease-in-out infinite; }
+  #gauche { left: 14px; } #droite { right: 14px; }
+  @keyframes pouls { 50% { opacity: .3; } }
+  #eclair { position: fixed; inset: 0; background: var(--brume); opacity: 0; pointer-events: none; z-index: 9; }
+  #eclair.flash { animation: flash .5s ease-out; }
+  @keyframes flash { 0% { opacity: .9; } 100% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .fleche, .case.actuelle, #eclair.flash { animation: none; } }
+</style>
+</head>
+<body>
+<video id="camera" playsinline autoplay muted></video>
+
+<!-- Décor réutilisé par les écrans (lune, chauves-souris, tombes, arbre mort, silhouette ailée) -->
+<template id="tpl-decor">
+  <svg class="decor" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g fill="#06222b">
+      <path d="M58 150c10-8 22-6 30 2-8-2-14 2-15 8-4-6-10-8-15-10zm30 2c8-8 20-10 30-2-5 2-11 4-15 10-1-6-7-10-15-8z"/>
+      <path d="M300 110c7-6 16-4 22 2-6-1-10 1-11 6-3-4-7-6-11-8zm22 2c6-6 15-7 22-1-4 1-8 3-11 7-1-4-5-7-11-6z"/>
+      <path d="M318 300c-6-10-4-22 6-30l4 8 4-8c10 8 12 20 6 30l26-18c-4 22-16 34-30 38v24h-12v-24c-14-4-26-16-30-38z" opacity=".8"/>
+      <path d="M40 560c0-18 12-30 26-30s26 12 26 30v90H40z"/>
+      <path d="M150 600h14v-22h14v22h14v14h-14v46h-14v-46h-14z"/>
+      <path d="M270 590c0-14 10-24 22-24s22 10 22 24v80h-44z" transform="rotate(-6 292 620)"/>
+      <path d="M352 680V520c-2-30-14-44-30-56 14 4 24 14 30 30 2-26 10-42 24-52-8 16-12 32-10 50 6-12 14-18 24-20-10 10-14 24-14 40v168z"/>
+      <path d="M0 650c60-14 120-8 200 2s150 4 200-6v154H0z"/>
+    </g>
+  </svg>
+  <svg class="cadre" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    <defs><linearGradient id="roche" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5fa3a8"/><stop offset=".45" stop-color="#2f6a72"/><stop offset="1" stop-color="#123a42"/></linearGradient></defs>
+    <path fill="url(#roche)" fill-rule="evenodd" stroke="#03141a" stroke-width=".5"
+      d="M0 0H100V100H0Z M8 9 L17 6 L25 10 L38 7 L52 10 L66 6 L79 9 L92 7 L93 20 L90 33 L94 46 L91 59 L94 71 L91 83 L92 90 L79 92 L65 89 L51 92 L36 89 L22 92 L8 90 L6 78 L9 65 L5 52 L9 39 L6 25 Z"/>
+    <path fill="none" stroke="#9de8e6" stroke-opacity=".35" stroke-width=".35" d="M3 3 L22 2 L48 4 L75 2 L97 3 L98 30 L96 60 L98 97 L70 98 L40 96 L2 98 L3 70 L1 40 Z"/>
+  </svg>
+</template>
+
+<div id="accueil" class="ecran">
+  <div class="contenu">
+    <h1>Chasse aux monstres</h1>
+    <p id="intro">Un monstre rôde tout près. Ouvre l'œil magique pour le voir.</p>
+    <button id="demarrer" class="planche" type="button">Ouvrir l'œil</button>
+    <p id="erreur" hidden></p>
+  </div>
+  <div class="piege"><div class="piege-titre"></div><div class="cases"></div></div>
+</div>
+
+<div id="scene" hidden>
+  <canvas id="vue"></canvas>
+  <div id="chargement" hidden>Le monstre approche…</div>
+  <div id="gauche" class="fleche" hidden>❮</div>
+  <div id="droite" class="fleche" hidden>❯</div>
+  <div id="nomMonstre" class="planche hud-haut"></div>
+  <div id="consigne" class="consigne">Tourne sur toi-même pour le trouver, puis touche-le !</div>
+  <div class="piege"><div class="piege-titre"></div><div class="cases"></div></div>
+</div>
+<div id="eclair"></div>
+
+<div id="victoire" class="ecran voile" hidden>
+  <div class="contenu">
+    <div class="titre">Capturé !</div>
+    <p id="compteur"></p>
+    <div class="planche indice"><small>Indice</small><span id="indice"></span></div>
+  </div>
+  <div class="piege"><div class="piege-titre"></div><div class="cases"></div></div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+/* ============ À PERSONNALISER ============
+   Un monstre par QR code : l'adresse du QR se termine par ?m=1, ?m=2, etc.
+   modele  : fichier .glb posé à côté de cette page ("" = fantôme provisoire)
+   nage    : true pour animer le monstre du bassin par son squelette
+   taille  : hauteur du monstre en mètres
+   hauteur : position verticale en mètres par rapport aux yeux (négatif = plus bas, 0 = à hauteur des yeux)
+   indice  : ce qui s'affiche une fois le monstre capturé */
+const MONSTRES = {
+  "1": { nom: "le Mothman",           modele: "", taille: 1.8, hauteur: 0.3,  indice: "Prochaine étape : le grand arbre" },
+  "2": { nom: "le Lutin moussu",      modele: "", taille: 0.7, hauteur: -1.1, indice: "Prochaine étape : les buissons" },
+  "3": { nom: "le Lutin des racines", modele: "", taille: 0.7, hauteur: -1.1, indice: "Prochaine étape : le banc" },
+  "4": { nom: "le Monstre du bassin", modele: "monstre-bassin.glb", nage: true, taille: 1.0, hauteur: -1.0, indice: "Prochaine étape : le lampadaire" },
+  "5": { nom: "le Barghest",          modele: "", taille: 1.0, hauteur: -1.4, indice: "Prochaine étape : l'entrée du parking" },
+  "6": { nom: "le Thunderbird",       modele: "", taille: 2.0, hauteur: 0.8,  indice: "Prochaine étape : le toboggan" },
+  "7": { nom: "la Fée",               modele: "", taille: 0.5, hauteur: 0,    indice: "Rendez-vous au chaudron !" }
+};
+const DISTANCE = 4; // mètres entre le joueur et le monstre
+/* ========================================= */
+
+const $ = id => document.getElementById(id);
+const ids = Object.keys(MONSTRES);
+const demande = new URLSearchParams(location.search).get("m");
+const id = MONSTRES[demande] ? demande : "1";
+const monstre = MONSTRES[id];
+$("nomMonstre").textContent = monstre.nom.replace(/^(le |la |l')/i, "");
+
+document.querySelectorAll(".ecran").forEach(e => e.prepend($("tpl-decor").content.cloneNode(true)));
+
+/* ---------- Piège (monstres déjà capturés, gardés sur ce téléphone) ---------- */
+function lirePris() { try { return JSON.parse(localStorage.getItem("monstresPris") || "[]"); } catch (e) { return []; } }
+function noterPris() { const l = lirePris(); if (!l.includes(id)) l.push(id); try { localStorage.setItem("monstresPris", JSON.stringify(l)); } catch (e) {} }
+function dessinerPiege() {
+  const pris = lirePris().filter(k => MONSTRES[k]);
+  document.querySelectorAll(".piege").forEach(p => {
+    p.querySelector(".piege-titre").textContent = "Piège : " + pris.length + " / " + ids.length;
+    p.querySelector(".cases").innerHTML = ids.map(k =>
+      '<div class="case' + (pris.includes(k) ? " prise" : "") + (k === id && !pris.includes(k) ? " actuelle" : "") +
+      '" title="' + MONSTRES[k].nom + '"><span>' + (pris.includes(k) ? "✓" : "?") + '</span></div>').join("");
+  });
+}
+dessinerPiege();
+
+/* ---------- Scène 3D ---------- */
+const toile = $("vue");
+const rendu = new THREE.WebGLRenderer({ canvas: toile, alpha: true, antialias: true });
+rendu.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 100);
+camera.rotation.order = "YXZ";
+scene.add(new THREE.HemisphereLight(0xdff6ff, 0x1a2a2a, 2.2));
+const soleil = new THREE.DirectionalLight(0xffffff, 2.2); soleil.position.set(2, 4, 3); scene.add(soleil);
+const lueur = new THREE.PointLight(0x4ff3ff, 6, 6); lueur.position.set(-1, 0.5, 1); scene.add(lueur);
+
+const pivot = new THREE.Group();   // place du monstre dans le parc
+const corps = new THREE.Group();   // balancement
+pivot.add(corps); scene.add(pivot);
+pivot.visible = false;
+let cible = null, melangeur = null, nage = null, pret = false;
+
+function redimensionner() {
+  rendu.setSize(innerWidth, innerHeight, false);
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+}
+addEventListener("resize", redimensionner); redimensionner();
+
+function fantome() {
+  const c = document.createElement("canvas"); c.width = c.height = 256;
+  const g = c.getContext("2d"); g.scale(2.56, 2.56); g.translate(0, -5);
+  g.fillStyle = "rgba(232,255,253,.92)"; g.fill(new Path2D("M50 6C27 6 14 24 14 46v54l12-10 12 12 12-12 12 12 12-12 12 10V46C86 24 73 6 50 6z"));
+  g.fillStyle = "#04121a";
+  [[37, 44, 7, 10], [63, 44, 7, 10], [50, 66, 8, 6]].forEach(([x, y, rx, ry]) => { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fill(); });
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+  return s;
+}
+
+function installer(objet) {
+  const boite = new THREE.Box3().setFromObject(objet);
+  const dims = boite.getSize(new THREE.Vector3()), centre = boite.getCenter(new THREE.Vector3());
+  objet.position.sub(centre);
+  const enveloppe = new THREE.Group(); enveloppe.add(objet);
+  const echelle = monstre.taille / (dims.y || 1);
+  enveloppe.scale.setScalar(echelle);
+  corps.add(enveloppe);
+  // zone de toucher un peu plus large que le monstre, pour les petits doigts
+  const rayon = Math.max(dims.x, dims.y, dims.z) * echelle * 0.65;
+  cible = new THREE.Mesh(new THREE.SphereGeometry(rayon, 12, 8), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }));
+  corps.add(cible);
+  pret = true; $("chargement").hidden = true;
+}
+
+/* ---------- Animation de nage (monstre du bassin, squelette Tripo) ---------- */
+function preparerNage(racine) {
+  const os = {}; racine.traverse(n => { if (n.isBone) os[n.name] = n; });
+  racine.updateMatrixWorld(true);
+  const reglages = [];
+  const ajouter = (nom, f) => {
+    const b = os[nom]; if (!b) return;
+    const pq = new THREE.Quaternion(); if (b.parent) b.parent.getWorldQuaternion(pq);
+    const x = b.getWorldPosition(new THREE.Vector3()).x;
+    reglages.push({ b, repos: b.quaternion.clone(), pq, pqi: pq.clone().invert(), cote: x < 0 ? -1 : 1, f });
+  };
+  // cou : ondulation et hochement
+  ["tripoHead_0", "tripoHead_1", "tripoHead_2", "tripoHead_3"].forEach((n, i) =>
+    ajouter(n, t => [Math.sin(t * .9 - i * .4) * .035, Math.sin(t * 1.2 - i * .5) * .07, 0]));
+  // queue
+  ["tripoTail_0", "tripoTail_1", "tripoTail_2"].forEach((n, i) =>
+    ajouter(n, t => [0, Math.sin(t * 1.5 - i * .6) * .18, 0]));
+  // nageoires avant et arrière (rame : battement + va-et-vient)
+  const rame = (amp, dephasage) => (t, cote) => {
+    const a = t * 2.2 + dephasage;
+    return [0, -cote * Math.cos(a) * .3 * amp, cote * Math.sin(a) * .35 * amp];
+  };
+  ajouter("bone_19", rame(1, 0)); ajouter("bone_21", rame(1, 0));
+  ajouter("bone_20", rame(.5, -.6)); ajouter("bone_22", rame(.5, -.6));
+  ajouter("bone_15", rame(.6, Math.PI)); ajouter("bone_17", rame(.6, Math.PI));
+  ajouter("bone_16", rame(.3, Math.PI - .6)); ajouter("bone_18", rame(.3, Math.PI - .6));
+  if (!reglages.length) return null;
+  const e = new THREE.Euler(), qm = new THREE.Quaternion();
+  return t => {
+    for (const r of reglages) {
+      const [x, y, z] = r.f(t, r.cote);
+      qm.setFromEuler(e.set(x, y, z));
+      // rotation exprimée dans les axes du monde, convertie dans l'espace du parent
+      r.b.quaternion.copy(r.pqi).multiply(qm).multiply(r.pq).multiply(r.repos);
+    }
+  };
+}
+
+if (monstre.modele) {
+  new GLTFLoader().load(monstre.modele, gltf => {
+    installer(gltf.scene);
+    if (gltf.animations.length) { melangeur = new THREE.AnimationMixer(gltf.scene); gltf.animations.forEach(a => melangeur.clipAction(a).play()); }
+    else if (monstre.nage) nage = preparerNage(gltf.scene);
+  }, ev => {
+    if (ev.total) $("chargement").textContent = "Le monstre approche… " + Math.round(ev.loaded / ev.total * 100) + " %";
+  }, () => { $("chargement").textContent = "Le monstre n'a pas pu venir. Vérifie le réseau et recharge la page."; });
+} else {
+  installer(fantome());
+}
+
+/* ---------- Mouvements du téléphone ---------- */
+const DEG = Math.PI / 180, axeZ = new THREE.Vector3(0, 0, 1), qEcran = new THREE.Quaternion();
+const qRedresse = new THREE.Quaternion(-Math.sqrt(.5), 0, 0, Math.sqrt(.5)), eulerTel = new THREE.Euler();
+let gyro = false, angleMonstre = null, pris = false;
+
+function orientation(e) {
+  if (e.alpha == null || e.beta == null) return;
+  gyro = true;
+  const ecran = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
+  eulerTel.set(e.beta * DEG, e.alpha * DEG, -e.gamma * DEG, "YXZ");
+  camera.quaternion.setFromEuler(eulerTel).multiply(qRedresse).multiply(qEcran.setFromAxisAngle(axeZ, -ecran * DEG));
+  if (angleMonstre == null) {
+    // le monstre se cache sur le côté ou derrière : il faut tourner pour le trouver
+    const avant = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+    const cap = Math.atan2(-avant.x, -avant.z);
+    angleMonstre = cap + (Math.random() < .5 ? -1 : 1) * (70 + Math.random() * 90) * DEG;
+  }
+}
+
+/* ---------- Boucle d'animation ---------- */
+const horloge = new THREE.Clock(), dansCamera = new THREE.Vector3();
+let finCapture = 0;
+function boucle() {
+  const dt = horloge.getDelta(), t = horloge.elapsedTime;
+  if (melangeur) melangeur.update(dt);
+  if (nage && !pris) nage(t);
+  if (pret) {
+    pivot.visible = true;
+    if (gyro && angleMonstre != null) {
+      const a = angleMonstre + Math.sin(t * .3) * .12;
+      pivot.position.set(-Math.sin(a) * DISTANCE, monstre.hauteur, -Math.cos(a) * DISTANCE);
+    } else if (!gyro) {
+      camera.quaternion.identity();
+      pivot.position.set(Math.sin(t * .5) * 0.6, monstre.hauteur + 0.6 + Math.sin(t * .8) * .25, -DISTANCE);
+    }
+    if (!pris) {
+      pivot.lookAt(camera.position.x, pivot.position.y, camera.position.z);
+      corps.position.y = Math.sin(t * 1.6) * .06 * monstre.taille;
+      corps.rotation.z = Math.sin(t * 1.1) * .05;
+    } else {
+      const k = Math.min(1, (performance.now() - finCapture) / 700);
+      corps.scale.setScalar(Math.max(.01, 1 - k));
+      corps.rotation.y += dt * 14;
+    }
+    // flèches vers le monstre quand il n'est pas à l'écran
+    dansCamera.copy(pivot.position).applyMatrix4(camera.matrixWorldInverse);
+    const proj = pivot.position.clone().project(camera);
+    const horsChamp = dansCamera.z > 0 || Math.abs(proj.x) > 1.05;
+    $("gauche").hidden = pris || !horsChamp || dansCamera.x >= 0;
+    $("droite").hidden = pris || !horsChamp || dansCamera.x < 0;
+  }
+  rendu.render(scene, camera);
+  requestAnimationFrame(boucle);
+}
+
+/* ---------- Capture ---------- */
+const rayon = new THREE.Raycaster(), doigt = new THREE.Vector2();
+toile.addEventListener("pointerdown", e => {
+  if (!pret || pris || !cible) return;
+  doigt.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  rayon.setFromCamera(doigt, camera);
+  if (rayon.intersectObject(cible, false).length) capturer();
+});
+
+function capturer() {
+  pris = true; finCapture = performance.now();
+  if (navigator.vibrate) navigator.vibrate(120);
+  $("eclair").classList.add("flash");
+  noterPris(); dessinerPiege();
+  const n = lirePris().filter(k => MONSTRES[k]).length;
+  setTimeout(() => {
+    $("compteur").textContent = n >= ids.length
+      ? "Tu as attrapé " + monstre.nom + ". Tous les monstres sont dans ton piège !"
+      : "Tu as attrapé " + monstre.nom + ". Plus que " + (ids.length - n) + " à trouver.";
+    $("indice").textContent = monstre.indice;
+    $("victoire").hidden = false;
+  }, 900);
+}
+
+/* ---------- Démarrage ---------- */
+function erreur(msg) { $("erreur").textContent = msg; $("erreur").hidden = false; }
+const PERDU = "Suis-le des yeux et touche-le quand il apparaît !";
+
+$("demarrer").addEventListener("click", async () => {
+  // iOS : la demande d'accès aux mouvements doit partir directement du toucher
+  let attenteGyro = Promise.resolve("granted");
+  if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
+    attenteGyro = DeviceOrientationEvent.requestPermission().catch(() => "denied");
+  }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    return erreur("La caméra n'est pas accessible : ouvre la page dans Safari, à une adresse en https.");
+  }
+  try {
+    const flux = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+    $("camera").srcObject = flux;
+    await $("camera").play().catch(() => {});
+  } catch (e) {
+    return erreur("Caméra refusée. Autorise la caméra pour ce site dans les réglages de Safari, puis recharge la page.");
+  }
+  if ((await attenteGyro) === "granted") addEventListener("deviceorientation", orientation);
+  else $("consigne").textContent = PERDU;
+  setTimeout(() => { if (!gyro) $("consigne").textContent = PERDU; }, 1500);
+  $("chargement").hidden = pret;
+  $("accueil").hidden = true; $("scene").hidden = false;
+  redimensionner();
+  requestAnimationFrame(boucle);
+});
+
+// pour les tests sur ordinateur, sans caméra
+window.__demarrerSansCamera = () => { $("accueil").hidden = true; $("scene").hidden = false; redimensionner(); requestAnimationFrame(boucle); };
+</script>
+</body>
+</html>
