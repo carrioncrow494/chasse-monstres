@@ -260,6 +260,7 @@
 
 <!-- Accueil -->
 <div id="accueil" class="ecran" hidden>
+  <img class="chat-menu" src="menu-catsith-3.webp" alt="">
   <div class="contenu">
     <div class="colonne">
       <h1>Cryptids</h1>
@@ -956,9 +957,10 @@ const lacetCamera = () => { const f = new THREE.Vector3(0, 0, -1).applyQuaternio
 
 // place la créature hors du champ : il faut se retourner pour la trouver
 function placer(c, angleImpose) {
-  if (!gyro && angleImpose == null) c.angle = (Math.random() - .5) * .5;   // sans capteur de mouvement : devant le joueur
-  else c.angle = angleImpose != null ? angleImpose : lacetCamera() + (Math.random() < .5 ? -1 : 1) * (100 + Math.random() * 70) * DEG;
   c.distance = mode() === "interieur" ? 2.6 + Math.random() * 1.6 : 3.2 + Math.random() * 1.4;
+  // capteurs autorisés mais première mesure pas encore arrivée : on attend, sinon la créature se retrouverait collée devant l'objectif
+  if (angleImpose == null && !gyro && gyroOK && !c.attente) { c.angle = null; c.attente = performance.now(); return; }
+  c.angle = angleImpose != null ? angleImpose : lacetCamera() + (Math.random() < .5 ? -1 : 1) * (100 + Math.random() * 70) * DEG;
 }
 const centre = new THREE.Vector3(), dansCam = new THREE.Vector3(), proj = new THREE.Vector3();
 function situation(c) {
@@ -967,12 +969,23 @@ function situation(c) {
   return { devant: dansCam.z < 0, x: proj.x, y: proj.y, gauche: dansCam.x < 0 };
 }
 
-let tDebutRecherche = 0, dernierPing = 0;
+let tDebutRecherche = 0, dernierPing = 0, lacetDoigt = 0, doigtX = null;
+const axeY = new THREE.Vector3(0, 1, 0);
+function aideDoigt() { $("consigne").textContent = "Fais glisser ton doigt sur l'écran pour regarder autour de toi, et écoute le tintement !"; }
+// la vidéo peut être bloquée (mode économie d'énergie de l'iPhone) : chaque toucher la relance
+addEventListener("pointerdown", () => { const c = moteur && moteur.creature; if (c && c.v.paused) c.v.play().catch(() => {}); }, true);
+toile.addEventListener("pointerdown", e => { doigtX = e.clientX; });
+addEventListener("pointermove", e => { if (doigtX == null || gyro) return; lacetDoigt += (e.clientX - doigtX) * .006; doigtX = e.clientX; });
+addEventListener("pointerup", () => { doigtX = null; }); addEventListener("pointercancel", () => { doigtX = null; });
 function boucle() {
   requestAnimationFrame(boucle);
   if ($("scene").hidden) return;
   const dt = Math.min(moteur.horloge.getDelta(), .1), t = performance.now(), c = moteur.creature;
-  if (!gyro) moteur.camera.quaternion.identity();
+  if (!gyro) moteur.camera.quaternion.setFromAxisAngle(axeY, lacetDoigt);   // sans capteur : on tourne la vue avec le doigt
+  if (c && c.angle == null && c.attente && (gyro || t - c.attente > 2500)) {
+    if (!gyro) { gyroOK = false; aideDoigt(); }
+    placer(c);
+  }
   if (c && c.angle != null) {
     const sol = -YEUX + (c.m.altitude || 0), a = c.angle + Math.sin(t / 4000) * .05;
     c.pivot.position.set(-Math.sin(a) * c.distance, sol, -Math.cos(a) * c.distance);
@@ -1071,7 +1084,8 @@ async function ouvrirOeil() {
       $("camera").srcObject = flux; await $("camera").play().catch(() => {});
     } catch (e) { erreur("Caméra refusée. Autorise la caméra pour ce site dans les réglages de Safari, puis recharge la page."); }
   }
-  gyroOK = (await attente) === "granted";
+  gyroOK = (await attente) === "granted" && "DeviceOrientationEvent" in window;
+  if (!gyroOK) bandeau("Capteurs de mouvement non autorisés : fais glisser ton doigt pour regarder autour de toi. (Pour les réactiver : ferme Safari complètement et rouvre l'application.)", 7000);
   if (gyroOK && !orientation.branche) { addEventListener("deviceorientation", orientation); orientation.branche = true; }
   moteur.taille();
   prochaineTraque();
@@ -1101,7 +1115,7 @@ function lancerMembre() {
   const c = creerCreature(m); moteur.creature = c; placer(c, traque.angleGPS);
   tDebutRecherche = performance.now();
   $("nomMonstre").textContent = traque.membres.length > 1 ? m.nom + " (" + (membreIdx + 1) + "/2)" : "???";
-  $("consigne").textContent = gyro || gyroOK ? "Une créature se cache tout près… Tourne sur toi-même et écoute le tintement !" : "Une créature se cache tout près… Regarde bien autour de toi !";
+  if (gyro || gyroOK) $("consigne").textContent = "Une créature se cache tout près… Tourne sur toi-même et écoute le tintement !"; else aideDoigt();
 }
 
 /* ---------- Mode QR : lecture des codes ---------- */
@@ -1189,7 +1203,8 @@ if (demandeInitiale && TRAQUES[demandeInitiale]) {
 
 // pour les tests sur ordinateur
 window.__test = { ouvrir: () => { montrer(null); $("scene").hidden = false; initMoteur(); prochaineTraque(); }, capturer: () => capturer(),
-  regarder: () => { const c = moteur.creature; if (c) c.angle = lacetCamera(); } };
+  regarder: () => { const c = moteur.creature; if (c) c.angle = lacetCamera(); },
+  etat: () => { const c = moteur && moteur.creature; return { angle: c && c.angle, lacet: moteur && lacetCamera(), gyro, gyroOK, trouve: c && c.trouve, consigne: $("consigne").textContent }; } };
 </script>
 </body>
 </html>
