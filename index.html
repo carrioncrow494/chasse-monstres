@@ -190,8 +190,22 @@
   .liste-qr b { color: var(--citrouille); font-weight: 600; }
   .croix { position: absolute; z-index: 20; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; width: 42px; height: 42px; border-radius: 50%;
     border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.75); color: var(--cyan); font-size: 1.15rem; line-height: 1; cursor: pointer; }
-  .chat-menu { position: absolute; z-index: 1; left: 0; bottom: calc(4px + env(safe-area-inset-bottom, 0px)); width: min(34vw, 170px);
+  .chat-menu { position: absolute; z-index: 1; left: 0; bottom: calc(4px + env(safe-area-inset-bottom, 0px)); width: min(26vw, 130px); opacity: .9;
     pointer-events: none; filter: drop-shadow(0 0 14px rgba(79,243,255,.3)); }
+  .onglets { display: flex; gap: 10px; }
+  .grille-choix { width: 100%; max-width: 520px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .choix-carte { position: relative; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px 8px;
+    border: 2px solid #2f6670; border-radius: 16px 8px 16px 8px; background: rgba(2,10,14,.85); color: var(--brume); font: inherit; cursor: pointer; }
+  .choix-carte img { width: 100%; aspect-ratio: 1; object-fit: contain; filter: brightness(0) drop-shadow(0 0 4px rgba(79,243,255,.6)); opacity: .55; }
+  .choix-carte span { font-size: .85rem; line-height: 1.1; }
+  .choix-carte::after { content: ""; position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 6px; border: 2px solid #4a8a92; }
+  .choix-carte.coche { border-color: var(--citrouille); box-shadow: 0 0 12px rgba(255,176,74,.35); }
+  .choix-carte.coche img { opacity: 1; filter: brightness(0) drop-shadow(0 0 6px rgba(255,176,74,.9)); }
+  .choix-carte.coche::after { content: "✓"; display: grid; place-items: center; background: var(--citrouille); border-color: var(--citrouille); color: #04121a; font-weight: 700; font-size: .9rem; }
+  .planche:disabled { opacity: .35; filter: grayscale(.6); }
+  /* retour visuel quand on touche un bouton */
+  .appuye { animation: appuye .45s ease-out; }
+  @keyframes appuye { 0% { transform: scale(.92); filter: brightness(1.8) drop-shadow(0 0 14px var(--cyan)); } 60% { transform: scale(1.03); } 100% { transform: scale(1); filter: none; } }
   @media (prefers-reduced-motion: reduce) { .fleche, #eclair.flash, #viseur, #sceau.pret { animation: none; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -258,6 +272,11 @@
       <p id="repriseTexte"></p>
       <div class="boutons"><button id="reprendre" class="mini cyan" type="button">Continuer cette aventure</button></div>
     </div>
+    <div class="onglets">
+      <button id="ongletHasard" class="mini cyan" type="button">Au hasard</button>
+      <button id="ongletChoix" class="mini" type="button">Je choisis</button>
+    </div>
+    <div id="blocHasard" class="colonne">
     <p>Combien de cryptides veux-tu sauver ?</p>
     <div class="compteur-choix">
       <button id="moins" class="rond gros" type="button" aria-label="Une créature de moins">−</button>
@@ -266,6 +285,12 @@
     </div>
     <div class="boutons"><button class="mini" data-n="2" type="button">2</button><button class="mini" data-n="4" type="button">4</button>
       <button class="mini" data-n="6" type="button">6</button><button class="mini" data-n="8" type="button">8</button><button class="mini" data-n="12" type="button">12</button></div>
+    </div>
+    <div id="blocChoix" class="colonne" hidden>
+      <p>Coche les cryptides à sauver (au moins 2).</p>
+      <div id="grilleChoix" class="grille-choix"></div>
+      <div class="boutons"><button id="toutCocher" class="mini" type="button">Tout cocher</button><button id="toutDecocher" class="mini" type="button">Tout décocher</button></div>
+    </div>
     <p id="duree" class="etat"></p>
     <div id="aCacher" class="choix" hidden>
       <h3>QR codes à cacher</h3>
@@ -461,7 +486,7 @@ const INTRO = [
 const YEUX = 1.2;   // hauteur du téléphone (mètres)
 /* =========================================================== */
 // les fichiers de chaque créature suivent son nom
-for (const t of Object.values(TRAQUES)) { t.image = "solo-" + t.cle + ".webp"; t.ombre = "ombre-" + t.cle + ".png"; t.relache = "relache-" + t.cle + ".mp4"; }
+for (const t of Object.values(TRAQUES)) { t.membres.forEach(m => m.id = m.ar.replace("ar-", "").replace(".mp4", "")); t.image = "solo-" + t.cle + ".webp"; t.ombre = "ombre-" + t.cle + ".png"; t.relache = "relache-" + t.cle + ".mp4"; }
 GARDIEN.image = "grimoire-catsith.webp"; GARDIEN.ombre = "ombre-catsith.png"; GARDIEN.relache = "relache-catsith.mp4";
 const FIGURINES = { mothman: ["figurine-mothman.glb"], nessie: ["figurine-nessie.glb"], thunderbird: ["figurine-thunderbird.glb"], barghest: ["figurine-barghest.glb"],
   faery: ["figurine-faery.glb"], lutins: ["figurine-lutin_green.glb", "figurine-lutin_orange.glb"], jackalope: ["figurine-jackalope.glb"], yeti: ["figurine-yeti.glb"],
@@ -495,11 +520,12 @@ function initAudio() {
   try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
   maitre = audio.createGain(); maitre.gain.value = sonActif ? 1 : 0; maitre.connect(audio.destination);
   audio.resume();
-  charger("sigil", "sigil.m4a"); charger("cri", "cri-thunderbird.m4a");
+  charger("sigil", "sigil.m4a");
   lancerMusique();
 }
 async function charger(nom, url) { try { const r = await fetch(url); tampons[nom] = await audio.decodeAudioData(await r.arrayBuffer()); } catch (e) {} }
-function jouerTampon(nom, vol = 1) { if (!audio || !tampons[nom]) return; const s = audio.createBufferSource(), g = audio.createGain(); g.gain.value = vol; s.buffer = tampons[nom]; s.connect(g).connect(maitre); s.start(); }
+function jouerTampon(nom, vol = 1, pan = 0) { if (!audio || !sonActif || !tampons[nom]) return; const s = audio.createBufferSource(), g = audio.createGain(); g.gain.value = vol; s.buffer = tampons[nom];
+  let n = s.connect(g); if (audio.createStereoPanner) { const p = audio.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, pan)); n = n.connect(p); } n.connect(maitre); s.start(); }
 function note(freq, debut, duree, { type = "sine", vol = .2, attaque = .01, sortie = maitre, filtre = 0 } = {}) {
   if (!audio) return; const t = audio.currentTime + debut, o = audio.createOscillator(), g = audio.createGain();
   o.type = type; o.frequency.setValueAtTime(freq, t);
@@ -517,7 +543,10 @@ function souffle(debut, duree, de, a, vol = .25) {
 }
 const hz = m => 440 * Math.pow(2, (m - 69) / 12);
 const SFX = {
-  clic: () => { note(880, 0, .12, { vol: .12 }); note(1320, .03, .1, { vol: .06 }); },
+  clic: () => { note(hz(81), 0, .25, { vol: .16 }); note(hz(88), .05, .3, { vol: .1 }); note(hz(93), .1, .35, { vol: .05 }); },
+  valider: () => { [69, 74, 78, 81].forEach((m, i) => note(hz(m + 12), i * .06, .6, { vol: .12, type: "triangle" })); souffle(0, .35, 800, 4000, .08); },
+  sceau: () => { souffle(0, .8, 400, 6000, .22); [62, 69, 74, 81, 86].forEach((m, i) => note(hz(m), i * .05, 1, { vol: .1, type: "triangle" })); note(hz(38), 0, 1, { vol: .3 }); },
+  rate: () => { note(hz(50), 0, .3, { vol: .15, type: "square", filtre: 500 }); note(hz(49), .12, .35, { vol: .12, type: "square", filtre: 500 }); },
   oeil: () => { souffle(0, .9, 300, 3000, .2); [62, 66, 69, 74].forEach((m, i) => note(hz(m), .15 + i * .09, 1, { vol: .08, type: "triangle" })); },
   revele: () => { [74, 78, 81, 86, 90].forEach((m, i) => note(hz(m), i * .07, 1.4, { vol: .09 })); souffle(0, .6, 2000, 6000, .08); },
   proche: () => note(hz(86), 0, .5, { vol: .05 }),
@@ -535,59 +564,95 @@ const SFX = {
 };
 const sfx = nom => { if (audio && sonActif && SFX[nom]) SFX[nom](); };
 // musique d'ambiance : nappe mystérieuse et clochettes en ré mineur
-// deux musiques : une petite valse de boîte à musique un peu inquiétante pour les menus, une nappe discrète pendant la traque
-let busMenu = null, busChasse = null, ambiance = "menu", tMesure = 0, mesureN = 0;
-const VALSE = {   // ré mineur, 3 temps ; [note, durée en temps]
-  melodie: [[[69,1],[74,1],[77,1]], [[76,1],[74,1],[73,1]], [[74,1],[67,1],[70,1]], [[69,3]],
-            [[69,1],[74,1],[77,1]], [[79,1],[77,1],[76,1]], [[77,1],[76,1],[74,1]], [[73,2],[69,1]],
-            [[81,1],[77,1],[74,1]], [[82,1],[79,1],[76,1]], [[81,1],[77,1],[73,1]], [[74,3]]],
-  basses: [38, 38, 43, 45, 38, 46, 43, 45, 38, 43, 45, 38],
-  accords: [[50,53,57],[50,53,57],[55,58,62],[49,52,55],[50,53,57],[46,50,53],[52,55,58],[49,52,57],[50,53,57],[55,58,62],[49,52,55],[50,53,57]]
+// Musique façon conte macabre : valse de célesta, chœur « aah », pizzicatos (menus) ; même couleur mais plus rythmée pour la traque
+let busMenu = null, busChasse = null, ambiance = "menu", tMenu = 0, tChasse = 0, nMenu = 0, nChasse = 0;
+function choeur(m, d, dur, vol, sortie, voyelle = "a") {   // voix « aaah » / « ouuh » : dents de scie filtrées en formants
+  const t = audio.currentTime + d, f = voyelle === "a" ? [730, 1090] : [320, 800];
+  const g = audio.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + dur * .35); g.gain.linearRampToValueAtTime(0, t + dur);
+  g.connect(sortie);
+  [0, 7, -5].forEach(det => {
+    const o = audio.createOscillator(), lfo = audio.createOscillator(), lg = audio.createGain();
+    o.type = "sawtooth"; o.frequency.value = hz(m); o.detune.value = det; lfo.frequency.value = 4.8 + Math.random(); lg.gain.value = 9; lfo.connect(lg).connect(o.detune);
+    f.forEach(fc => { const bp = audio.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = fc; bp.Q.value = 5; o.connect(bp); bp.connect(g); });
+    o.start(t); lfo.start(t); o.stop(t + dur + .05); lfo.stop(t + dur + .05);
+  });
+}
+function timbale(d, sortie, vol = .35) {
+  const t = audio.currentTime + d, o = audio.createOscillator(), g = audio.createGain();
+  o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(48, t + .4);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + .6); o.connect(g).connect(sortie); o.start(t); o.stop(t + .65);
+}
+function balai(d, sortie, vol = .05) {
+  const t = audio.currentTime + d, n = audio.sampleRate * .12, b = audio.createBuffer(1, n, audio.sampleRate), x = b.getChannelData(0);
+  for (let i = 0; i < n; i++) x[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = audio.createBufferSource(), h = audio.createBiquadFilter(), g = audio.createGain(); h.type = "highpass"; h.frequency.value = 3000; g.gain.value = vol;
+  s.buffer = b; s.connect(h).connect(g).connect(sortie); s.start(t);
+}
+const celesta = (m, d, l, sortie, vol = .07) => { note(hz(m), d, .6 + l * .35, { vol, sortie }); note(hz(m) * 2, d, .35, { vol: vol * .3, sortie }); note(hz(m) * 2.76, d, .2, { vol: vol * .12, sortie }); };
+const pizz = (m, d, sortie, vol = .2) => note(hz(m), d, .35, { type: "triangle", vol, sortie });
+const VALSE = {   // ré mineur, 3/4 — [note, temps]
+  chords: [[50,53,57],[50,53,57],[49,53,57],[48,53,57],[46,50,53],[43,46,50],[40,43,46],[45,49,52],
+           [50,53,57],[50,53,57],[43,46,50],[40,43,47],[46,50,53],[45,49,52],[50,53,57],[45,49,52]],
+  melodie: [[[69,2],[74,1]],[[77,1],[76,1],[74,1]],[[73,2],[74,1]],[[76,3]],[[77,2],[79,1]],[[82,1],[81,1],[79,1]],[[76,2],[77,1]],[[76,3]],
+            [[69,1],[74,1],[77,1]],[[81,1],[79,1],[77,1]],[[79,1],[82,1],[86,1]],[[85,3]],[[86,1],[82,1],[79,1]],[[76,1],[73,1],[69,1]],[[74,3]],[[0,1],[69,1],[73,1]]]
+};
+const MARCHE = {  // même tonalité, 4/4 plus vif — accords par mesure
+  chords: [[50,53,57],[46,50,53],[43,46,50],[45,49,52],[50,53,57],[46,50,53],[52,55,58],[45,49,52]],
+  motif: [81, 82, 81, 80, 81, 0, 77, 0]   // petit motif chromatique au célesta
 };
 function lancerMusique() {
   if (musiqueOn || !audio) return; musiqueOn = true;
-  busMenu = audio.createGain(); busMenu.gain.value = .2; busMenu.connect(maitre);
+  busMenu = audio.createGain(); busMenu.gain.value = .22; busMenu.connect(maitre);
   busChasse = audio.createGain(); busChasse.gain.value = 0; busChasse.connect(maitre);
-  // écho léger pour la boîte à musique
-  const echo = audio.createDelay(); echo.delayTime.value = .33; const retour = audio.createGain(); retour.gain.value = .32;
-  busMenu.connect(echo); echo.connect(retour); retour.connect(echo); retour.connect(maitre);
-  tMesure = audio.currentTime + .1; programmer();
+  const echo = audio.createDelay(); echo.delayTime.value = .36; const retour = audio.createGain(); retour.gain.value = .3;
+  busMenu.connect(echo); busChasse.connect(echo); echo.connect(retour); retour.connect(echo); retour.connect(maitre);
+  tMenu = tChasse = audio.currentTime + .1; programmer();
 }
 function programmer() {
   if (!musiqueOn) return;
-  const temps = .52;   // ~115 battements par minute
-  while (tMesure < audio.currentTime + 1.2) {
-    const i = mesureN % 12, d = tMesure - audio.currentTime;
-    // valse (menus) : basse pizzicato, accords légers, mélodie de boîte à musique
-    note(hz(VALSE.basses[i]), d, .45, { type: "triangle", vol: .22, sortie: busMenu });
-    [1, 2].forEach(t => VALSE.accords[i].forEach(m => note(hz(m), d + t * temps, .3, { type: "sine", vol: .045, sortie: busMenu })));
-    let pos = 0;
-    VALSE.melodie[i].forEach(([m, l]) => { note(hz(m + 12), d + pos * temps, .9 + l * .3, { vol: .07, sortie: busMenu }); note(hz(m + 24), d + pos * temps, .5, { vol: .018, sortie: busMenu }); pos += l; });
-    if (i === 3 || i === 11) fantome(d + temps, busMenu);   // un « ouuuh » de fantôme toutes les 8 mesures
-    // nappe de traque : accord tenu très doux toutes les deux mesures
-    if (mesureN % 2 === 0) VALSE.accords[i].forEach(m => { note(hz(m - 12), d, 3.6, { type: "sawtooth", vol: .05, attaque: 1.2, sortie: busChasse, filtre: 600 }); });
-    if (Math.random() < .5) note(hz([74, 77, 81, 86][Math.floor(Math.random() * 4)]), d + Math.random() * 1.5, 2, { vol: .05, sortie: busChasse });
-    tMesure += temps * 3; mesureN++;
+  const tv = .6;     // valse : 100 battements par minute
+  while (tMenu < audio.currentTime + 1.5) {
+    const i = nMenu % 16, d = tMenu - audio.currentTime, ch = VALSE.chords[i];
+    pizz(ch[0] - 12, d, busMenu, .24);
+    [1, 2].forEach(k => ch.forEach(m => pizz(m, d + k * tv, busMenu, .045)));
+    if (i % 4 === 0) choeur(ch[0] + 12, d, tv * 12, .05, busMenu, i % 8 ? "o" : "a");
+    let pos = 0; VALSE.melodie[i].forEach(([m, l]) => { if (m) celesta(m + 12, d + pos * tv, l, busMenu); pos += l; });
+    if (i === 7 || i === 15) fantome(d + tv, busMenu);
+    tMenu += tv * 3; nMenu++;
+  }
+  const tc = .47;    // traque : 128 battements par minute
+  while (tChasse < audio.currentTime + 1.5) {
+    const i = nChasse % 8, d = tChasse - audio.currentTime, ch = MARCHE.chords[i];
+    for (let k = 0; k < 8; k++) pizz((k % 2 ? ch[0] : ch[0] - 12) + (k % 4 === 3 ? 7 : 0), d + k * tc / 2, busChasse, k % 2 ? .1 : .16);   // ostinato en croches
+    timbale(d, busChasse, .3); timbale(d + tc * 2, busChasse, .15);
+    balai(d + tc, busChasse); balai(d + tc * 3, busChasse);
+    if (i % 2 === 0) choeur(ch[2] + 12, d, tc * 8, .04, busChasse, "o");
+    if (i >= 4) MARCHE.motif.forEach((m, k) => { if (m) celesta(m, d + k * tc / 2, .5, busChasse, .06); });
+    else ch.forEach((m, k) => celesta(m + 24, d + k * tc, .4, busChasse, .035));
+    tChasse += tc * 4; nChasse++;
   }
   setTimeout(programmer, 400);
 }
 function fantome(d, sortie) {   // glissando de « theremin »
   const t = audio.currentTime + d, o = audio.createOscillator(), g = audio.createGain(), vib = audio.createOscillator(), vg = audio.createGain();
-  o.type = "sine"; o.frequency.setValueAtTime(hz(62), t); o.frequency.linearRampToValueAtTime(hz(69), t + .8); o.frequency.linearRampToValueAtTime(hz(57), t + 2.4);
-  vib.frequency.value = 5.5; vg.gain.value = 6; vib.connect(vg).connect(o.frequency);
-  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.05, t + .5); g.gain.linearRampToValueAtTime(0, t + 2.5);
+  o.type = "sine"; o.frequency.setValueAtTime(hz(74), t); o.frequency.linearRampToValueAtTime(hz(81), t + .8); o.frequency.linearRampToValueAtTime(hz(69), t + 2.4);
+  vib.frequency.value = 5.5; vg.gain.value = 8; vib.connect(vg).connect(o.frequency);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.045, t + .5); g.gain.linearRampToValueAtTime(0, t + 2.5);
   o.connect(g).connect(sortie); o.start(t); vib.start(t); o.stop(t + 2.6); vib.stop(t + 2.6);
 }
 function changerAmbiance(type) {   // "menu", "chasse" ou "silence" (pendant les vidéos)
   ambiance = type; if (!busMenu) return; const t = audio.currentTime;
   busMenu.gain.cancelScheduledValues(t); busChasse.gain.cancelScheduledValues(t);
-  busMenu.gain.setTargetAtTime(type === "menu" ? .2 : 0, t, .4); busChasse.gain.setTargetAtTime(type === "chasse" ? .11 : 0, t, .6);
+  busMenu.gain.setTargetAtTime(type === "menu" ? .22 : 0, t, .4); busChasse.gain.setTargetAtTime(type === "chasse" ? .16 : 0, t, .6);
 }
 function majBoutonSon() { $("son").classList.toggle("coupe", !sonActif); $("son").textContent = sonActif ? "♪" : "✕"; }
 $("son").addEventListener("click", () => { sonActif = !sonActif; ecrire(CLES.son, sonActif); initAudio(); if (maitre) maitre.gain.value = sonActif ? 1 : 0; majBoutonSon(); });
 majBoutonSon();
 ["pointerdown", "touchend"].forEach(ev => document.addEventListener(ev, () => initAudio(), { once: true, capture: true }));
-document.addEventListener("click", e => { if (e.target.closest("button, a")) { initAudio(); if (!e.target.closest("#son, #sceau, #suiteIntro")) sfx("clic"); } }, true);
+document.addEventListener("click", e => { const b = e.target.closest("button, a"); if (!b) return; initAudio();
+  if (!b.closest("#son, #sceau, #suiteIntro")) sfx(b.matches("#commencer, #cestParti, #reprendre, [data-mode], .principal, .mini, .orange") ? "valider" : "clic"); }, true);
+document.addEventListener("pointerdown", e => { const b = e.target.closest("button, a, .choix-carte"); if (!b) return;
+  b.classList.remove("appuye"); void b.offsetWidth; b.classList.add("appuye"); setTimeout(() => b.classList.remove("appuye"), 450); if (navigator.vibrate) navigator.vibrate(12); }, true);
 
 /* ===================== Accueil, parents ===================== */
 const LIBELLES = { qr: "Mode : QR codes cachés", interieur: "Mode : géolocalisation en intérieur (5 m)", exterieur: "Mode : géolocalisation en extérieur (10 m)" };
@@ -632,10 +697,28 @@ $("commencer").addEventListener("click", () => { initAudio(); preparerChoix(); m
 let nombre = Math.max(2, Math.min(12, lire("cryptids-nombre", 6))), tirage = [];
 const melanger = l => { l = l.slice(); for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; } return l; };
 function tirer() { tirage = melanger(ids).slice(0, nombre).sort((a, b) => a - b); }
+let choixLibre = false, coches = new Set(lire("cryptids-coches", ids));
+function dessinerChoix() {
+  $("grilleChoix").innerHTML = ids.map(k => '<button type="button" class="choix-carte' + (coches.has(k) ? " coche" : "") + '" data-k="' + k + '"><img alt="" src="' + TRAQUES[k].ombre + '"><span>' + TRAQUES[k].nom.split(",")[0] + '</span></button>').join("");
+}
+function basculer(libre) {
+  choixLibre = libre; $("blocHasard").hidden = libre; $("blocChoix").hidden = !libre;
+  $("ongletHasard").classList.toggle("cyan", !libre); $("ongletChoix").classList.toggle("cyan", libre);
+  if (libre) dessinerChoix(); else tirer();
+  majChoix();
+}
+$("ongletHasard").addEventListener("click", () => basculer(false));
+$("ongletChoix").addEventListener("click", () => basculer(true));
+$("grilleChoix").addEventListener("click", e => { const b = e.target.closest(".choix-carte"); if (!b) return;
+  const k = b.dataset.k; coches.has(k) ? coches.delete(k) : coches.add(k); b.classList.toggle("coche", coches.has(k)); majChoix(); });
+$("toutCocher").addEventListener("click", () => { coches = new Set(ids); dessinerChoix(); majChoix(); });
+$("toutDecocher").addEventListener("click", () => { coches = new Set(); dessinerChoix(); majChoix(); });
 function majChoix() {
+  if (choixLibre) { tirage = ids.filter(k => coches.has(k)); nombre = tirage.length; ecrire("cryptids-coches", tirage); }
+  $("cestParti").disabled = tirage.length < 2;
   $("nombre").textContent = nombre; $("moins").disabled = nombre <= 2; $("plus").disabled = nombre >= 12;
   const min = nombre * 4, max = nombre * 7;
-  $("duree").textContent = "Environ " + min + " à " + max + " minutes";
+  $("duree").textContent = nombre < 2 ? "Choisis au moins 2 cryptides" : nombre + " cryptides · environ " + min + " à " + max + " minutes";
   document.querySelectorAll("[data-n]").forEach(b => b.classList.toggle("cyan", +b.dataset.n === nombre));
   if (mode() === "qr") {
     $("aCacher").hidden = false;
@@ -646,7 +729,7 @@ function preparerChoix() {
   const p = enCours();
   $("reprise").hidden = !p;
   if (p) $("repriseTexte").textContent = "Partie en cours : " + p.pris.length + " / " + p.liste.length + " cryptides sauvés.";
-  tirer(); majChoix();
+  basculer(choixLibre);
 }
 $("moins").addEventListener("click", () => { nombre = Math.max(2, nombre - 1); tirer(); majChoix(); });
 $("plus").addEventListener("click", () => { nombre = Math.min(12, nombre + 1); tirer(); majChoix(); });
@@ -876,18 +959,19 @@ function boucle() {
     const s = situation(c), visible = s.devant && Math.abs(s.x) < .75 && Math.abs(s.y) < 1.1;
     // révélation : la créature n'apparaît que lorsqu'on la regarde
     if (!c.trouve && visible && t - c.tApparition > 900 && c.v.readyState >= 2) {
-      c.trouve = true; c.tReveal = t; sfx("revele"); if (traque.son) jouerTampon("cri", .9);
+      c.trouve = true; c.tReveal = t; c.tCri = t; sfx("revele"); setTimeout(() => jouerTampon("cri-" + c.m.id, 1, s.x), 350);
       $("consigne").textContent = "Le voilà ! Touche-le ou utilise le sceau magique.";
       $("nomMonstre").textContent = c.m.nom || traque.nom.split(",")[0]; $("gauche").hidden = $("droite").hidden = true;
       jaillir(c, 26);
     }
     if (!c.pris) c.mat.opacity = c.trouve ? Math.min(1, (t - c.tReveal) / 700) : 0;
+    if (c.trouve && !c.pris && visible && t - c.tCri > 7000) { c.tCri = t; jouerTampon("cri-" + c.m.id, .8, s.x); }
     // indices : petit tintement de plus en plus fréquent quand on s'approche, flèches après un moment
     if (!c.trouve) {
       const ecart = Math.abs(Math.atan2(Math.sin(c.angle - lacetCamera()), Math.cos(c.angle - lacetCamera())));
       const periode = 600 + ecart / Math.PI * 2400;
       if (t - dernierPing > periode) { dernierPing = t; sfx("proche"); }
-      const aide = t - tDebutRecherche > 12000 && !visible;
+      const aide = !visible;   // flèches bleues dès le début
       $("gauche").hidden = !aide || !s.gauche; $("droite").hidden = !aide || s.gauche;
     }
     $("sceau").disabled = !c.trouve || c.pris;
@@ -921,8 +1005,8 @@ toile.addEventListener("pointerdown", e => {
 $("sceau").addEventListener("click", () => {
   const c = moteur && moteur.creature; if (!c || !c.trouve || c.pris) return;
   const s = situation(c);
-  if (s.devant && Math.abs(s.x) < .6 && Math.abs(s.y) < 1) capturer();
-  else { $("consigne").textContent = "Vise la créature avec l'œil pour utiliser le sceau !"; }
+  if (s.devant && Math.abs(s.x) < .6 && Math.abs(s.y) < 1) { sfx("sceau"); capturer(); }
+  else { sfx("rate"); $("consigne").textContent = "Vise la créature avec l'œil pour utiliser le sceau !"; }
 });
 function capturer() {
   const c = moteur.creature; c.pris = true; c.tPris = performance.now();
@@ -991,6 +1075,7 @@ function demarrerTraque(k) {
 }
 function lancerMembre() {
   const m = traque.membres[membreIdx];
+  if (audio && !tampons["cri-" + m.id]) charger("cri-" + m.id, "cri-" + m.id + ".m4a");
   if (mode() === "exterieur" && !traque.gpsFait) return chercherGPS();
   const c = creerCreature(m); moteur.creature = c; placer(c, traque.angleGPS);
   tDebutRecherche = performance.now();
