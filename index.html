@@ -3,18 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>Chasse aux monstres</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Cryptids</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&family=Grenze:wght@400;600&display=swap">
 <style>
-  /* Cimetière bleu-vert nocturne : cadre de pierre, planches sombres à lueur cyan, emplacements de piège en bas */
+  /* Cryptids : nuit bleu-vert, cadre de pierre, planches sombres à lueur cyan ; le grimoire en parchemin sombre */
   :root {
     --abysse: #04121a;
     --lagon: #0f4a57;
     --halo: #2a9aa6;
-    --pierre: #2b5a63;
-    --pierre-ombre: #0a262e;
     --cyan: #4ff3ff;
     --menthe: #9dffc8;
     --brume: #d8f7f5;
@@ -27,130 +26,183 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; margin: 0; overflow: hidden; background: var(--abysse); color: var(--brume);
     font-family: var(--texte); touch-action: manipulation; user-select: none; -webkit-user-select: none; }
-  video { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  [hidden] { display: none !important; }
+  video#camera { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   #scene { position: fixed; inset: 0; overflow: hidden; }
 
-  /* ---------- Décor des écrans ---------- */
+  /* ---------- Écrans ---------- */
   .ecran { position: fixed; inset: 0; overflow: hidden;
     background: radial-gradient(ellipse 70% 55% at 50% 48%, var(--halo) 0%, var(--lagon) 38%, var(--abysse) 85%); }
-  .ecran.voile { background: radial-gradient(ellipse 70% 55% at 50% 48%, rgba(42,154,166,.85) 0%, rgba(15,74,87,.9) 40%, rgba(4,18,26,.97) 85%); }
+  .ecran.voile { background: radial-gradient(ellipse 70% 55% at 50% 48%, rgba(42,154,166,.88) 0%, rgba(15,74,87,.92) 40%, rgba(4,18,26,.97) 85%); }
   .decor, .cadre { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
   .decor { opacity: .55; }
   .contenu { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; align-items: center;
-    justify-content: center; gap: 22px; padding: calc(56px + env(safe-area-inset-top, 0px)) 36px calc(120px + env(safe-area-inset-bottom, 0px)); text-align: center; }
+    justify-content: center; gap: 20px; padding: calc(56px + env(safe-area-inset-top, 0px)) 34px calc(48px + env(safe-area-inset-bottom, 0px)); text-align: center; }
+  .defile { justify-content: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
-  h1, .titre { margin: 0; font-family: var(--titre); font-weight: 400; line-height: .95; letter-spacing: .04em;
+  h1, .titre { margin: 0; font-family: var(--titre); font-weight: 400; line-height: .95; letter-spacing: .05em;
     text-wrap: balance; background: linear-gradient(180deg, var(--menthe) 10%, #3fd6b4 60%, #1d8f86 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
     filter: drop-shadow(0 3px 0 var(--abysse)) drop-shadow(0 0 14px rgba(79,243,255,.45)); }
-  h1 { font-size: clamp(3rem, 15vw, 5rem); }
-  .titre { font-size: clamp(3.2rem, 17vw, 5.5rem); }
-  .ecran p { margin: 0; max-width: 28ch; font-size: 1.2rem; line-height: 1.4; text-shadow: 0 2px 6px var(--abysse); }
+  h1 { font-size: clamp(3.6rem, 19vw, 6rem); }
+  .titre { font-size: clamp(2.8rem, 14vw, 4.6rem); }
+  h2 { margin: 0; font-family: var(--titre); font-weight: 400; font-size: clamp(2.1rem, 10vw, 3rem); letter-spacing: .05em;
+    color: var(--menthe); text-shadow: 0 0 14px rgba(79,243,255,.5); }
+  .sous-titre { font-family: var(--titre); letter-spacing: .14em; color: var(--cyan); font-size: 1.05rem; }
+  .ecran p { margin: 0; max-width: 32ch; font-size: 1.15rem; line-height: 1.4; text-shadow: 0 2px 6px var(--abysse); }
+  .colonne { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
 
   /* Planche sombre à volutes */
-  .planche { position: relative; min-width: 240px; padding: 16px 34px 14px; border: 2px solid rgba(79,243,255,.55);
+  .planche { position: relative; min-width: 250px; padding: 15px 30px 13px; border: 2px solid rgba(79,243,255,.55);
     border-radius: 30px 12px 28px 14px / 22px 28px 16px 26px; color: var(--cyan);
     background: linear-gradient(180deg, #102a33 0%, var(--planche) 55%, #020a0e 100%);
     box-shadow: 0 6px 0 #01080b, 0 0 18px rgba(79,243,255,.35), inset 0 1px 0 rgba(157,255,200,.25);
-    font-family: var(--titre); font-size: 1.7rem; letter-spacing: .08em; text-shadow: 0 0 10px var(--cyan); }
+    font-family: var(--titre); font-size: 1.6rem; letter-spacing: .08em; text-shadow: 0 0 10px var(--cyan); text-decoration: none; }
   .planche::before, .planche::after { content: ""; position: absolute; width: 26px; height: 26px;
     background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Cpath d='M13 13m-1.5 0a1.5 1.5 0 1 1 3 0a3.5 3.5 0 1 1-7 0a5.5 5.5 0 1 1 11 0a7.5 7.5 0 1 1-15 0a9.5 9.5 0 0 1 9-9.5' fill='none' stroke='%237fe9f0' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
     filter: drop-shadow(0 0 3px rgba(79,243,255,.8)); }
   .planche::before { left: -11px; bottom: -9px; transform: rotate(160deg); }
   .planche::after { right: -11px; top: -9px; }
-  button.planche { cursor: pointer; transition: transform .12s, box-shadow .12s; }
-  button.planche:active { transform: translateY(4px); box-shadow: 0 2px 0 #01080b, 0 0 24px rgba(79,243,255,.6); }
-  button:focus-visible { outline: 3px solid var(--menthe); outline-offset: 5px; }
-
-  .indice { font-family: var(--texte); font-weight: 600; font-size: 1.3rem; letter-spacing: 0; color: var(--brume);
-    text-shadow: none; max-width: 30ch; min-width: 0; line-height: 1.3; }
-  .indice small { display: block; margin-bottom: 4px; font-family: var(--titre); font-weight: 400; font-size: 1rem;
-    letter-spacing: .12em; color: var(--citrouille); text-shadow: 0 0 8px rgba(255,176,74,.6); }
+  button.planche, a.planche { cursor: pointer; transition: transform .12s, box-shadow .12s; display: inline-block; }
+  button.planche:active, a.planche:active { transform: translateY(4px); box-shadow: 0 2px 0 #01080b, 0 0 24px rgba(79,243,255,.6); }
+  .planche.principal { font-size: 1.9rem; padding: 18px 34px 15px; }
+  .planche.petit { min-width: 0; font-size: 1.2rem; padding: 11px 22px 9px; }
+  .planche.orange { color: var(--citrouille); border-color: rgba(255,176,74,.6); text-shadow: 0 0 10px rgba(255,176,74,.7);
+    box-shadow: 0 6px 0 #01080b, 0 0 16px rgba(255,176,74,.3); }
+  button:focus-visible, a:focus-visible { outline: 3px solid var(--menthe); outline-offset: 5px; }
+  .lien { background: none; border: 0; color: #8fbfc4; font: inherit; font-size: 1rem; text-decoration: underline; padding: 8px; cursor: pointer; }
+  .boutons { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; }
   #erreur { color: var(--citrouille); }
 
-  /* ---------- Emplacements du piège ---------- */
-  .piege { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-direction: column; align-items: center;
-    gap: 8px; padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(180deg, transparent, rgba(2,10,14,.85) 35%); }
-  .piege-titre { font-family: var(--titre); font-size: 1rem; letter-spacing: .14em; color: var(--menthe); font-variant-numeric: tabular-nums; }
-  .cases { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-  .case { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px;
-    border: 2px solid #3a6f78; background: radial-gradient(circle at 40% 35%, #2c5961, #0b252c 75%);
-    box-shadow: 0 3px 0 #01080b, inset 0 0 8px rgba(0,0,0,.6); transform: rotate(45deg) scale(.82); }
-  .case span { transform: rotate(-45deg); font-family: var(--titre); font-size: 1.3rem; color: #6d9aa1; }
-  .case.prise { border-color: var(--cyan); background: radial-gradient(circle, #3ee0e8, #0e5a66 70%);
-    box-shadow: 0 3px 0 #01080b, 0 0 14px var(--cyan); }
-  .case.prise span { color: var(--abysse); }
-  .case.actuelle { animation: appel 1.2s ease-in-out infinite; }
-  @keyframes appel { 50% { box-shadow: 0 3px 0 #01080b, 0 0 18px var(--citrouille); border-color: var(--citrouille); } }
+  /* bouton du son, en haut à droite */
+  .son { position: fixed; z-index: 30; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; width: 46px; height: 46px; border-radius: 50%;
+    border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.7); color: var(--cyan); font-size: 1.3rem; cursor: pointer; }
+  .son.coupe { color: #567; border-color: #345; }
 
-  /* ---------- Chasse en cours ---------- */
+  /* ---------- Parents ---------- */
+  .choix { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 12px; padding: 18px 18px 20px; text-align: left;
+    border: 2px solid #2f6670; border-radius: 22px 10px 22px 10px; background: linear-gradient(180deg, rgba(16,42,51,.92), rgba(2,10,14,.92)); }
+  .choix.actif { border-color: var(--cyan); box-shadow: 0 0 16px rgba(79,243,255,.35); }
+  .choix h3 { margin: 0; font-family: var(--titre); font-weight: 400; font-size: 1.5rem; letter-spacing: .05em; color: var(--cyan); }
+  .choix p { font-size: 1.05rem; max-width: none; }
+  .choix .boutons { justify-content: flex-start; }
+  .etat { font-family: var(--titre); letter-spacing: .1em; color: var(--citrouille); }
+
+  /* ---------- Intro : Sporran raconte ---------- */
+  #intro { background: radial-gradient(ellipse 80% 60% at 30% 80%, rgba(42,154,166,.6), var(--abysse) 75%); }
+  #guide { position: absolute; left: 0; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); width: min(44vw, 230px); z-index: 3;
+    filter: drop-shadow(0 0 16px rgba(79,243,255,.35)); pointer-events: none; }
+  .bulle { position: absolute; z-index: 4; left: 16px; right: 16px; bottom: calc(min(44vw, 230px) * .82 + env(safe-area-inset-bottom, 0px));
+    max-width: 560px; margin: 0 auto; padding: 18px 20px 16px; border: 2px solid rgba(79,243,255,.55); border-radius: 22px 22px 22px 6px;
+    background: rgba(3,14,20,.92); box-shadow: 0 0 22px rgba(79,243,255,.25); display: flex; flex-direction: column; gap: 14px; }
+  .bulle p { margin: 0; font-size: 1.18rem; line-height: 1.45; min-height: 7.5em; white-space: pre-line; }
+  .bulle .qui { font-family: var(--titre); letter-spacing: .1em; color: var(--citrouille); font-size: 1.05rem; }
+  .bulle .boutons { justify-content: flex-end; }
+
+  /* ---------- Chasse ---------- */
   #vue { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
   #chargement { position: absolute; top: 50%; left: 16px; right: 16px; transform: translateY(-50%); text-align: center;
     font-family: var(--titre); font-size: 1.4rem; letter-spacing: .08em; color: var(--cyan); text-shadow: 0 0 10px var(--abysse); }
-  .hud-haut { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
-    min-width: 0; max-width: calc(100% - 32px); font-size: 1.25rem; padding: 10px 26px 8px; white-space: nowrap; }
-  .consigne { position: absolute; left: 16px; right: 16px; bottom: calc(118px + env(safe-area-inset-bottom, 0px));
+  .hud-haut { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+    min-width: 0; max-width: calc(100% - 130px); font-size: 1.2rem; padding: 9px 22px 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .quitter { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); left: 12px; width: 46px; height: 46px; border-radius: 50%;
+    border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.7); color: var(--cyan); font-size: 1.3rem; cursor: pointer; z-index: 5; }
+  .consigne { position: absolute; left: 16px; right: 16px; bottom: calc(132px + env(safe-area-inset-bottom, 0px));
     text-align: center; font-size: 1.15rem; text-shadow: 0 0 6px var(--abysse), 0 2px 4px var(--abysse); }
   .fleche { position: absolute; top: 50%; font-family: var(--titre); font-size: 4rem; color: var(--cyan);
     text-shadow: 0 0 14px var(--cyan); transform: translateY(-50%); animation: pouls 1s ease-in-out infinite; }
   #gauche { left: 14px; } #droite { right: 14px; }
   @keyframes pouls { 50% { opacity: .3; } }
+  #viseur { position: absolute; left: 50%; top: 45%; width: 62vmin; height: 62vmin; transform: translate(-50%, -50%);
+    border: 3px solid var(--cyan); border-radius: 28px; box-shadow: 0 0 0 100vmax rgba(4,18,26,.35), 0 0 22px var(--cyan) inset, 0 0 22px var(--cyan);
+    animation: pouls 1.4s ease-in-out infinite; pointer-events: none; }
+  #radar { position: absolute; top: calc(70px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 12px; padding: 8px 18px; border-radius: 999px; background: rgba(2,10,14,.75); border: 2px solid rgba(255,176,74,.55); }
+  #radarFleche { width: 34px; height: 34px; transition: transform .25s; }
+  #radarTexte { font-family: var(--titre); letter-spacing: .08em; color: var(--citrouille); font-size: 1.2rem; white-space: nowrap; }
+  .barre-bas { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; align-items: flex-end; justify-content: center; gap: 22px;
+    padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, transparent, rgba(2,10,14,.8) 45%); }
+  #sceau { width: 92px; height: 92px; border-radius: 50%; border: 3px solid var(--cyan); cursor: pointer;
+    background: radial-gradient(circle, rgba(79,243,255,.35), rgba(4,18,26,.9) 70%); box-shadow: 0 0 22px rgba(79,243,255,.6);
+    display: grid; place-items: center; }
+  #sceau svg { width: 62px; height: 62px; }
+  #sceau:disabled { opacity: .35; box-shadow: none; }
+  #sceau.pret { animation: appel 1s ease-in-out infinite; }
+  @keyframes appel { 50% { box-shadow: 0 0 34px var(--cyan), 0 0 6px #fff inset; } }
+  .rond { width: 58px; height: 58px; border-radius: 50%; border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.75);
+    color: var(--cyan); font-family: var(--titre); font-size: .85rem; letter-spacing: .05em; cursor: pointer; }
+  .legende { font-size: .8rem; color: var(--brume); text-align: center; margin-top: 4px; }
+  #sigil { position: fixed; left: 0; top: 0; width: 82vmin; height: 82vmin; margin: -41vmin 0 0 -41vmin; z-index: 8; pointer-events: none; }
   #eclair { position: fixed; inset: 0; background: var(--brume); opacity: 0; pointer-events: none; z-index: 9; }
   #eclair.flash { animation: flash .5s ease-out; }
   @keyframes flash { 0% { opacity: .9; } 100% { opacity: 0; } }
-  @media (prefers-reduced-motion: reduce) { .fleche, .case.actuelle, #eclair.flash { animation: none; } }
+  #bandeau { position: absolute; left: 16px; right: 16px; top: 38%; z-index: 6; text-align: center; padding: 16px; border-radius: 18px;
+    background: rgba(2,10,14,.82); border: 2px solid var(--menthe); font-size: 1.25rem; line-height: 1.35; }
 
-  /* ---------- Capture : sigil ---------- */
-  #sigil { position: fixed; left: 0; top: 0; width: 82vmin; height: 82vmin; margin: -41vmin 0 0 -41vmin; z-index: 8;
-    pointer-events: none; mix-blend-mode: screen; }
-
-  /* ---------- Victoire ---------- */
-  .portrait { width: min(62vw, 300px); aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 0 22px rgba(79,243,255,.55)); }
+  /* ---------- Sauvé ! ---------- */
+  .portrait { width: min(56vw, 260px); aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 0 22px rgba(79,243,255,.55)); }
+  .fiche { max-width: 34ch; text-align: left; display: flex; flex-direction: column; gap: 8px; }
+  .fiche .nom { font-family: var(--titre); font-size: 1.6rem; letter-spacing: .05em; color: var(--citrouille); text-align: center; }
+  .fiche p { font-size: 1.12rem; }
   .final { color: var(--citrouille); font-weight: 600; }
-  .boutons { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; }
-  .petit { min-width: 0; font-size: 1.25rem; padding: 12px 24px 10px; }
 
-  /* ---------- Inventaire ---------- */
-  #inventaire { z-index: 6; }
-  #inventaire .contenu { justify-content: flex-start; gap: 14px; overflow-y: auto; padding-bottom: calc(36px + env(safe-area-inset-bottom, 0px)); }
-  #inventaire h2 { margin: 0; font-family: var(--titre); font-weight: 400; font-size: clamp(2.2rem, 11vw, 3.2rem); letter-spacing: .05em;
-    color: var(--menthe); text-shadow: 0 0 14px rgba(79,243,255,.5); }
+  /* ---------- Grimoire ---------- */
+  #grimoire { z-index: 6; }
   .compte { font-family: var(--titre); letter-spacing: .12em; color: var(--cyan); font-variant-numeric: tabular-nums; }
-  .grille { width: 100%; max-width: 520px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .grille { width: 100%; max-width: 560px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
   .carte { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px 12px;
     border: 2px solid #2f6670; border-radius: 22px 10px 22px 10px; background: linear-gradient(180deg, rgba(16,42,51,.92), rgba(2,10,14,.92));
     box-shadow: 0 4px 0 #01080b; }
   .carte.prise { border-color: var(--cyan); box-shadow: 0 4px 0 #01080b, 0 0 16px rgba(79,243,255,.35); }
+  .carte.libre { border-color: var(--citrouille); }
+  .carte.gardien { grid-column: 1 / -1; border-color: var(--menthe); }
   .carte img { width: 100%; aspect-ratio: 1; object-fit: contain; }
+  .carte.gardien img { width: 50%; }
   .carte img.ombre { filter: brightness(0) drop-shadow(0 0 6px rgba(79,243,255,.7)); opacity: .75; }
-  .carte .nom { font-family: var(--titre); font-size: 1.25rem; letter-spacing: .05em; color: var(--cyan); }
-  .carte .astuce { font-size: 1rem; line-height: 1.25; color: var(--brume); }
+  .carte .nom { font-family: var(--titre); font-size: 1.15rem; letter-spacing: .04em; color: var(--cyan); }
+  .carte .astuce { font-size: .98rem; line-height: 1.25; color: var(--brume); }
   .carte .astuce b { color: var(--citrouille); font-weight: 600; }
-  .carte.derniere { grid-column: 1 / -1; max-width: 50%; justify-self: center; width: 100%; }
-  .piege { cursor: pointer; }
-  .relacher { margin-top: 4px; padding: 7px 16px 6px; border: 2px solid var(--citrouille); border-radius: 999px; background: rgba(255,176,74,.12);
-    color: var(--citrouille); font-family: var(--titre); font-size: 1rem; letter-spacing: .08em; cursor: pointer; }
-  .relacher:disabled { opacity: .35; cursor: default; }
-  #relache { position: fixed; inset: 0; z-index: 12; background: #000; display: flex; align-items: center; justify-content: center; }
-  #relache[hidden] { display: none; }
+  .mini { margin-top: 4px; padding: 7px 14px 6px; border: 2px solid var(--citrouille); border-radius: 999px; background: rgba(255,176,74,.12);
+    color: var(--citrouille); font-family: var(--titre); font-size: .95rem; letter-spacing: .06em; cursor: pointer; }
+  .mini.cyan { border-color: var(--cyan); color: var(--cyan); background: rgba(79,243,255,.1); }
+  .mini:disabled { opacity: .35; cursor: default; }
+
+  /* ---------- Relâche et figurine ---------- */
+  .plein { position: fixed; inset: 0; z-index: 12; background: #000; display: flex; align-items: center; justify-content: center; }
   #videoRelache { width: 100%; height: 100%; object-fit: contain; }
-  #envol { width: min(70vw, 340px); aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 0 24px rgba(79,243,255,.6)); }
+  #envol { width: min(70vw, 340px); aspect-ratio: 1; object-fit: contain; }
   #envol.part { animation: part 2.4s ease-in forwards; }
   @keyframes part { 0% { transform: scale(1); opacity: 1; } 40% { transform: scale(1.08) translateY(-4vh); } 100% { transform: scale(.2) translateY(-60vh); opacity: 0; } }
-  .relache-bas { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 12px;
-    padding: 18px 16px calc(22px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, transparent, rgba(0,0,0,.75) 40%); }
-  .relache-titre { font-family: var(--titre); font-size: 1.6rem; letter-spacing: .06em; color: var(--menthe); text-align: center; text-shadow: 0 0 12px rgba(79,243,255,.5); }
-  .raz { margin-top: 6px; background: none; border: 0; color: #7fa9ae; font: inherit; font-size: .95rem; text-decoration: underline; padding: 8px; }
-  #viseur { position: absolute; left: 50%; top: 45%; width: 62vmin; height: 62vmin; transform: translate(-50%, -50%);
-    border: 3px solid var(--cyan); border-radius: 28px; box-shadow: 0 0 0 100vmax rgba(4,18,26,.35), 0 0 22px var(--cyan) inset, 0 0 22px var(--cyan);
-    animation: pouls 1.4s ease-in-out infinite; pointer-events: none; }
+  .plein-bas { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 12px;
+    padding: 18px 16px calc(22px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, transparent, rgba(0,0,0,.8) 40%); }
+  .plein-titre { font-family: var(--titre); font-size: 1.6rem; letter-spacing: .06em; color: var(--menthe); text-align: center; text-shadow: 0 0 12px rgba(79,243,255,.5); }
+  #figurine { background: radial-gradient(ellipse 70% 60% at 50% 45%, #1d5a66, #04121a 75%); }
+  #figCanvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  .socle-haut { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: 64px; right: 64px; text-align: center; pointer-events: none; }
+  .socle-haut .nom { font-family: var(--titre); font-size: 1.6rem; line-height: 1.05; letter-spacing: .06em; color: var(--citrouille); text-shadow: 0 0 12px rgba(255,176,74,.5); }
+  .socle-haut .aide { font-size: 1rem; color: #9fc9cc; }
+  .compteur-choix { display: flex; align-items: center; gap: 22px; }
+  .rond.gros { width: 64px; height: 64px; font-size: 2.2rem; font-family: var(--texte); line-height: 1; }
+  .rond:disabled { opacity: .3; }
+  .grand-nombre { min-width: 2ch; font-family: var(--titre); font-size: 5.5rem; line-height: 1; color: var(--citrouille);
+    text-shadow: 0 0 22px rgba(255,176,74,.55); font-variant-numeric: tabular-nums; }
+  .liste-qr { margin: 0; padding-left: 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 14px; font-size: 1.05rem; }
+  .liste-qr b { color: var(--citrouille); font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) { .fleche, #eclair.flash, #viseur, #sceau.pret { animation: none; } }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
 </head>
 <body>
 <video id="camera" playsinline autoplay muted></video>
+<button id="son" class="son" type="button" aria-label="Couper ou remettre le son">♪</button>
 
-<!-- Décor réutilisé par les écrans (lune, chauves-souris, tombes, arbre mort, silhouette ailée) -->
+<!-- Décor réutilisé par les écrans -->
 <template id="tpl-decor">
   <svg class="decor" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
     <g fill="#06222b">
@@ -173,546 +225,773 @@
   </svg>
 </template>
 
+<!-- Accueil -->
 <div id="accueil" class="ecran">
   <div class="contenu">
-    <h1>Chasse aux monstres</h1>
-    <p id="intro">Ouvre l'œil magique et vise le QR code d'une créature cachée dans le parc.</p>
-    <button id="demarrer" class="planche" type="button">Ouvrir l'œil</button>
-    <button class="planche petit ouvrir-inventaire" type="button">Mon inventaire</button>
-    <p id="erreur" hidden></p>
+    <div class="colonne">
+      <h1>Cryptids</h1>
+      <div class="sous-titre">Le grimoire des créatures perdues</div>
+    </div>
+    <p id="intro-accueil">Des créatures se sont échappées du grimoire de Sporran. Aide-le à les retrouver !</p>
+    <div class="colonne">
+      <button id="commencer" class="planche principal" type="button">Commencer l'aventure</button>
+      <button class="planche petit ouvrir-grimoire" type="button">Mon grimoire</button>
+      <button id="ouvrirParents" class="planche petit orange" type="button">Préparer le sauvetage</button>
+    </div>
+    <p id="modeActuel" class="etat"></p>
   </div>
-  <div class="piege ouvrir-inventaire"><div class="piege-titre"></div><div class="cases"></div></div>
 </div>
 
+<!-- Nouvelle aventure : combien de cryptides ? -->
+<div id="partie" class="ecran" hidden>
+  <div class="contenu defile">
+    <h2>Nouvelle aventure</h2>
+    <div id="reprise" class="choix" hidden>
+      <h3>Reprendre</h3>
+      <p id="repriseTexte"></p>
+      <div class="boutons"><button id="reprendre" class="mini cyan" type="button">Continuer cette aventure</button></div>
+    </div>
+    <p>Combien de cryptides veux-tu sauver ?</p>
+    <div class="compteur-choix">
+      <button id="moins" class="rond gros" type="button" aria-label="Une créature de moins">−</button>
+      <div id="nombre" class="grand-nombre">6</div>
+      <button id="plus" class="rond gros" type="button" aria-label="Une créature de plus">+</button>
+    </div>
+    <div class="boutons"><button class="mini" data-n="2" type="button">2</button><button class="mini" data-n="4" type="button">4</button>
+      <button class="mini" data-n="6" type="button">6</button><button class="mini" data-n="8" type="button">8</button><button class="mini" data-n="12" type="button">12</button></div>
+    <p id="duree" class="etat"></p>
+    <div id="aCacher" class="choix" hidden>
+      <h3>QR codes à cacher</h3>
+      <p>Pour les parents : cachez seulement ces QR codes de la planche.</p>
+      <ul id="listeQr" class="liste-qr"></ul>
+      <div class="boutons"><button id="retirer" class="mini" type="button">Tirer d'autres créatures</button></div>
+    </div>
+    <button id="cestParti" class="planche principal" type="button">C'est parti !</button>
+    <button id="fermerPartie" class="lien" type="button">Retour</button>
+  </div>
+</div>
+
+<!-- Préparer le sauvetage (parents) -->
+<div id="parents" class="ecran" hidden>
+  <div class="contenu defile">
+    <h2>Préparer le sauvetage</h2>
+    <p>Pour les parents : choisissez comment les créatures seront cachées.</p>
+    <div id="choixQr" class="choix">
+      <h3>QR codes à cacher</h3>
+      <p>Imprimez la planche, découpez les cartes et cachez-les où vous voulez. Les enfants les trouvent puis les visent avec l'œil magique.</p>
+      <div class="boutons">
+        <a class="mini cyan" href="qr-codes-cryptids.pdf" target="_blank" rel="noopener">Planche à imprimer</a>
+        <button class="mini" type="button" data-mode="qr">Choisir ce mode</button>
+      </div>
+    </div>
+    <div id="choixGeo" class="choix">
+      <h3>Géolocalisation</h3>
+      <p>Pas de papier : les créatures sont dispersées autour de vous.</p>
+      <p><b>Intérieur</b> : dans un rayon de 5 m. Le GPS ne fonctionne pas dans une maison, alors les créatures apparaissent une à une autour de l'enfant : il doit tourner sur lui-même pour les trouver.</p>
+      <p><b>Extérieur</b> : de vrais points GPS dans un rayon de 10 m, avec une boussole « froid / chaud ». La précision d'un téléphone est de quelques mètres : restez dans un endroit dégagé.</p>
+      <div class="boutons">
+        <button class="mini" type="button" data-mode="interieur">Intérieur (5 m)</button>
+        <button class="mini" type="button" data-mode="exterieur">Extérieur (10 m)</button>
+      </div>
+    </div>
+    <p id="modeParents" class="etat"></p>
+    <button id="fermerParents" class="planche petit" type="button">Retour</button>
+    <button id="raz" class="lien" type="button">Remettre toute l'aventure à zéro</button>
+  </div>
+</div>
+
+<!-- Introduction : Sporran le Cat sìth -->
+<div id="intro" class="ecran" hidden>
+  <img id="guide" src="grimoire-catsith.webp" alt="Sporran, le Cat sìth">
+  <div class="bulle">
+    <div class="qui">Sporran, le Cat sìth</div>
+    <p id="texteIntro"></p>
+    <div class="boutons"><button id="suiteIntro" class="planche petit" type="button">Suite</button></div>
+  </div>
+</div>
+
+<!-- Œil magique -->
 <div id="scene" hidden>
   <canvas id="vue"></canvas>
+  <button id="quitter" class="quitter" type="button" aria-label="Retour à l'accueil">✕</button>
+  <div id="viseur" hidden></div>
+  <div id="nomMonstre" class="planche hud-haut">Œil magique</div>
+  <div id="radar" hidden>
+    <svg id="radarFleche" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 L31 33 L20 26 L9 33 Z" fill="#ffb04a"/></svg>
+    <span id="radarTexte">…</span>
+  </div>
   <div id="chargement" hidden>La créature approche…</div>
   <div id="gauche" class="fleche" hidden>❮</div>
   <div id="droite" class="fleche" hidden>❯</div>
-  <div id="viseur" hidden></div>
-  <div id="nomMonstre" class="planche hud-haut"></div>
-  <div id="consigne" class="consigne">Tourne sur toi-même pour la trouver, puis touche-la !</div>
-  <div class="piege ouvrir-inventaire"><div class="piege-titre"></div><div class="cases"></div></div>
+  <div id="bandeau" hidden></div>
+  <div id="consigne" class="consigne"></div>
+  <div class="barre-bas">
+    <div><button class="rond ouvrir-grimoire" type="button">Grimoire</button></div>
+    <div><button id="sceau" type="button" disabled aria-label="Sceau magique">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke="#bff9ff" stroke-width="2.4" stroke-linejoin="round">
+        <circle cx="32" cy="32" r="27"/><circle cx="32" cy="32" r="21" stroke-dasharray="3 4"/>
+        <path d="M32 12 L49 42 L15 42 Z"/><path d="M32 4v8M32 52v8M4 32h8M52 32h8"/><circle cx="32" cy="33" r="4" fill="#bff9ff"/></g></svg>
+    </button><div class="legende">Sceau magique</div></div>
+    <div style="width:58px"></div>
+  </div>
 </div>
 <img id="sigil" alt="" hidden>
 <div id="eclair"></div>
 
+<!-- Sauvé ! -->
 <div id="victoire" class="ecran voile" hidden>
-  <div class="contenu">
-    <div class="titre">Capturé !</div>
+  <div class="contenu defile">
+    <div class="titre">Sauvé !</div>
     <img id="portrait" class="portrait" alt="">
+    <div class="fiche"><div id="ficheNom" class="nom"></div><p id="ficheTexte"></p></div>
     <p id="compteur"></p>
-    <p id="final" class="final" hidden>Bravo ! Les sept créatures sont dans ton piège. Va montrer ton inventaire au maître du jeu pour recevoir le trésor.</p>
-    <div class="boutons"><button class="planche petit ouvrir-inventaire" type="button">Mon inventaire</button>
-      <button id="autre" class="planche petit" type="button">Chercher une autre créature</button></div>
+    <p id="final" class="final" hidden>Aventure terminée, tous les cryptides sont sauvés ! Ouvre ton grimoire pour les relâcher et gagner leurs figurines, ou lance une nouvelle aventure.</p>
+    <div class="boutons">
+      <button id="continuer" class="planche petit" type="button">Continuer le sauvetage</button>
+      <button id="rejouer" class="planche petit orange" type="button" hidden>Nouvelle aventure</button>
+      <button class="planche petit ouvrir-grimoire" type="button">Grimoire</button>
+    </div>
   </div>
 </div>
 
-<div id="relache" hidden>
+<!-- Grimoire -->
+<div id="grimoire" class="ecran" hidden>
+  <div class="contenu defile">
+    <h2>Mon grimoire</h2>
+    <div class="compte" id="compteGrimoire"></div>
+    <div class="grille" id="grille"></div>
+    <button id="fermerGrimoire" class="planche petit" type="button">Fermer</button>
+  </div>
+</div>
+
+<!-- Relâcher -->
+<div id="relache" class="plein" hidden>
   <video id="videoRelache" playsinline preload="auto" hidden></video>
   <img id="envol" alt="" hidden>
-  <div class="relache-bas">
-    <div id="titreRelache" class="relache-titre"></div>
-    <button id="fermerRelache" class="planche petit" type="button"><span id="finRelache" hidden></span>Retour à l'inventaire</button>
+  <div class="plein-bas">
+    <div id="titreRelache" class="plein-titre"></div>
+    <div class="boutons">
+      <button id="voirFigurine" class="planche petit orange" type="button" hidden>Voir la figurine</button>
+      <button id="fermerRelache" class="planche petit" type="button">Retour au grimoire</button>
+    </div>
   </div>
 </div>
 
-<div id="inventaire" class="ecran" hidden>
-  <div class="contenu">
-    <h2>Mon inventaire</h2>
-    <div class="compte" id="compteInventaire"></div>
-    <div class="grille" id="grille"></div>
-    <button id="fermerInventaire" class="planche petit" type="button">Fermer</button>
-    <button id="raz" class="raz" type="button">Remettre l'inventaire à zéro</button>
-  </div>
+<!-- Figurine 360° -->
+<div id="figurine" class="plein" hidden>
+  <canvas id="figCanvas"></canvas>
+  <div class="socle-haut"><div id="figNom" class="nom"></div><div class="aide">Fais-la tourner avec ton doigt</div></div>
+  <div id="figChargement" class="plein-titre" hidden>Chargement…</div>
+  <div class="plein-bas"><button id="fermerFigurine" class="planche petit" type="button">Retour au grimoire</button></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-<script type="importmap">
-{ "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
-} }
-</script>
 <script type="module">
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-/* ============ À PERSONNALISER ============
-   Un QR code par créature : l'adresse se termine par ?m=1 … ?m=7
-   modele   : fichier .glb animé, posé à côté de cette page
-   image    : animation de l'inventaire (WebP transparent) ; ombre : silhouette fixe
-   taille   : hauteur de la créature en mètres
-   altitude : hauteur au-dessus du sol en mètres (0 = posée au sol)
-   distance : distance au joueur en mètres
-   cap      : rotation en degrés pour que la créature regarde le joueur
-   relache  : vidéo jouée quand on relâche la créature depuis l'inventaire ("" = envol simple)
-   indice   : l'indice qui aide les enfants à la trouver */
-const MONSTRES = {
-  "1": { nom: "le Mothman", court: "Mothman", modele: "mothman.glb", relache: "relache-mothman.mp4", image: "inventaire-mothman.webp", ombre: "ombre-mothman.png",
-         taille: 1.7, altitude: 0.4, distance: 3.2, cap: 0, indice: "aime la lumière", fx: "lumiere" },
-  "2": { nom: "Nessie", court: "Nessie", modele: "nessie.glb", relache: "relache-nessie.mp4", image: "inventaire-nessie.webp", ombre: "ombre-nessie.png",
-         taille: 1.05, altitude: 0, distance: 3.5, cap: 0, indice: "vit dans l'eau", fx: "eau", gouttes: [6.15, 8.8] },
-  "3": { nom: "le Thunderbird", court: "Thunderbird", modele: "thunderbird.glb", relache: "relache-thunderbird.mp4", image: "inventaire-thunderbird.webp", ombre: "ombre-thunderbird.png",
-         taille: 1.55, altitude: 0.8, distance: 3.5, cap: -60, indice: "crée de l'électricité", fx: "eclairs", cri: 3.25, son: "cri-thunderbird.m4a" },
-  "4": { nom: "le Barghest", court: "Barghest", modele: "barghest.glb", relache: "relache-barghest.mp4", image: "inventaire-barghest.webp", ombre: "ombre-barghest.png",
-         taille: 1.3, altitude: 0, distance: 3.5, cap: 0, indice: "vit dans les endroits sombres", fx: "fumee" },
-  "5": { nom: "la Fée", court: "Fée", modele: "fee.glb", relache: "relache-fee.mp4", image: "inventaire-fee.webp", ombre: "ombre-fee.png",
-         taille: 0.8, altitude: 0.8, distance: 2.4, cap: 0, indice: "adore la musique", fx: "lueur", rire: 1.5 },
-  "6": { nom: "le Lutin vert", court: "Lutin vert", modele: "lutin-vert.glb", relache: "relache-lutins.mp4", duo: "7", image: "inventaire-lutin-vert.webp", ombre: "ombre-lutin-vert.png",
-         taille: 1.15, altitude: 0, distance: 3, cap: 0, indice: "se cache dans les jardins", fx: "feuilles",
-         couleurs: [0x6fbf3a, 0x3e8f2a, 0xa5d65a], agite: [[0.3, 0.8], [1.9, 2.9], [3.9, 4.4], [4.9, 5.6]] },
-  "7": { nom: "le Lutin orange", court: "Lutin orange", modele: "lutin-orange.glb", relache: "relache-lutins.mp4", duo: "6", image: "inventaire-lutin-orange.webp", ombre: "ombre-lutin-orange.png",
-         taille: 1.15, altitude: 0, distance: 3, cap: 0, indice: "adore les marrons", fx: "feuilles",
-         couleurs: [0xd9692b, 0xb8441e, 0xe8a03c], bonds: [0.5, 1.5] }
+/* ===================== À PERSONNALISER =====================
+   Une traque par QR code : l'adresse se termine par ?m=1 … ?m=12
+   membres : la ou les créatures de la traque (les lutins sont deux, capturés l'un après l'autre)
+     ar       : vidéo de la créature dans la caméra (couleur en haut, transparence en bas)
+     ratio    : largeur / hauteur de l'image
+     taille   : hauteur de l'image en mètres dans le parc
+     altitude : hauteur au-dessus du sol (mètres)
+   image : animation du grimoire ; ombre : silhouette ; relache : vidéo de relâche ; figurine : modèle 3D HIGH */
+const TRAQUES = {
+  "1":  { cle: "mothman", nom: "Michmuche, le Mothman", indice: "aime la lumière",
+          texte: "Un papillon de nuit géant aux grands yeux rouges. On ne sait pas d'où il vient, mais il apparaît pour prévenir d'un danger. Il est très timide et ne résiste jamais à une lampe allumée.",
+          membres: [{ ar: "ar-mothman.mp4", ratio: 1.237, taille: 1.6, altitude: 0.2 }] },
+  "2":  { cle: "nessie", nom: "Ness, le monstre du loch", indice: "vit dans l'eau",
+          texte: "Elle vit au fond d'un lac très profond et ne sort que son long cou pour dire bonjour. Elle adore faire des farces et personne n'arrive à la prendre en photo, car elle plonge toujours juste avant le clic !",
+          membres: [{ ar: "ar-nessie.mp4", ratio: 0.994, taille: 1.4, altitude: 0 }] },
+  "3":  { cle: "thunderbird", nom: "Huhuk, le Thunderbird", indice: "crée de l'électricité", son: "cri-thunderbird.m4a",
+          texte: "Un oiseau immense qui vole au-dessus des nuages. Quand il bat des ailes, on entend le tonnerre, et quand il cligne des yeux, on voit des éclairs.",
+          membres: [{ ar: "ar-thunderbird.mp4", ratio: 0.979, taille: 1.9, altitude: 0.3 }] },
+  "4":  { cle: "barghest", nom: "Whitby, le Barghest", indice: "vit dans les endroits sombres",
+          texte: "Un gros chien fantôme, noir et tout ébouriffé, qui se promène la nuit sur les landes. Il a l'air impressionnant, mais il cherche surtout quelqu'un pour lui lancer un bâton.",
+          membres: [{ ar: "ar-barghest.mp4", ratio: 1.014, taille: 1.6, altitude: 0 }] },
+  "5":  { cle: "faery", nom: "Loupiote, la Faery", indice: "adore la musique",
+          texte: "Une toute petite fée qui brille comme une veilleuse. Elle éclaire le chemin de ceux qui ont un peu peur du noir ou qui se sont perdus.",
+          membres: [{ ar: "ar-faery.mp4", ratio: 1.006, taille: 1.3, altitude: 0.5 }] },
+  "6":  { cle: "lutins", nom: "Kumquat & Kiwi, les lutins", indice: "se cachent dans les jardins et adorent les marrons",
+          texte: "Deux lutins inséparables : l'un orange et farceur, l'autre vert et râleur. Kumquat invente des farces, Kiwi ronchonne, et ils finissent toujours par rire ensemble.",
+          membres: [{ nom: "Kiwi", ar: "ar-lutin_green.mp4", ratio: 1.011, taille: 1.4, altitude: 0 },
+                    { nom: "Kumquat", ar: "ar-lutin_orange.mp4", ratio: 1.01, taille: 1.4, altitude: 0 }] },
+  "7":  { cle: "jackalope", nom: "Bucky, le Jackalope", indice: "court plus vite que le vent",
+          texte: "Un lapin malicieux qui porte de petits bois de cerf sur la tête. Il adore la musique et reprend les chansons des voyageurs. Mais il court si vite que personne n'a jamais réussi à le rattraper.",
+          membres: [{ ar: "ar-jackalope.mp4", ratio: 1.416, taille: 1.3, altitude: 0 }] },
+  "8":  { cle: "yeti", nom: "Migou, le Yeti", indice: "laisse d'énormes traces de pas",
+          texte: "Un géant tout blanc et tout doux qui vit dans les montagnes enneigées. Il laisse d'énormes traces de pas et fait les meilleurs câlins du monde.",
+          membres: [{ ar: "ar-yeti.mp4", ratio: 1.0, taille: 1.9, altitude: 0 }] },
+  "9":  { cle: "gargouille", nom: "Ardoise, la Gargouille", indice: "aime se percher tout en haut",
+          texte: "Perchée sur le toit, elle reste immobile comme une pierre toute la journée. La nuit, elle s'étire, bâille et surveille le quartier pour que tout le monde dorme tranquille. Mais attention, elle crache de l'eau sur ceux qui font trop de bruit !",
+          membres: [{ ar: "ar-gargouille.mp4", ratio: 1.119, taille: 1.6, altitude: 0.2 }] },
+  "10": { cle: "chupacabra", nom: "Moca, le Chupacabra", indice: "a toujours un petit creux",
+          texte: "Une petite créature à piquants qui vient des pays chauds. On la dit farouche, mais elle est surtout très gourmande et raffole du lait de chèvre.",
+          membres: [{ ar: "ar-chupacabra.mp4", ratio: 1.421, taille: 1.3, altitude: 0 }] },
+  "11": { cle: "kraken", nom: "Bloop, le Kraken", indice: "collectionne les trésors",
+          texte: "Une pieuvre géante qui habite tout au fond de l'océan. Elle collectionne les trésors des bateaux pirates qui ont coulé. Avec ses huit bras, elle peut chatouiller huit poissons à la fois.",
+          membres: [{ ar: "ar-kraken.mp4", ratio: 1.022, taille: 1.7, altitude: 0.1 }] },
+  "12": { cle: "swamp", nom: "Gadoo, le monstre des marais", indice: "adore les flaques de boue",
+          texte: "Un bonhomme tout vert, couvert d'algues et de mousse. Son jeu préféré est de sauter dans les flaques de boue, et il n'a jamais besoin de prendre de bain !",
+          membres: [{ ar: "ar-swamp.mp4", ratio: 1.067, taille: 1.6, altitude: 0 }] }
 };
+const GARDIEN = { cle: "catsith", nom: "Sporran, le Cat sìth",
+  texte: "Un grand chat noir d'Écosse avec une tache blanche en forme de cœur sur le poitrail. Certains disent que c'est en fait une sorcière transformée. Il adore se glisser sans bruit dans les collines et ronronne si fort qu'on le prend pour le vent." };
+const INTRO = [
+  "Chapristi ! On m'a volé mon précieux grimoire contenant l'ensemble des cryptides. J'ai pu le retrouver, mais certains se sont égarés et perdus dans notre monde. Aide-moi à les sauver.",
+  "Quoi !! Tu ne sais pas ce que c'est qu'un cryptide ?\nUn cryptide est une petite créature souvent craintive, qui vit cachée. Elles sont difficiles à voir avec des yeux d'humains.",
+  "Tiens ! Prends cet œil magique pour les trouver. Une fois fait, capture-les avec le sceau magique ou en tapotant l'écran. Nous les relâcherons ensemble dans leur environnement.",
+  "Tu gagneras des figurines à collectionner pour chaque sauvetage.\nAllez vite, dépêche-toi !"
+];
 const YEUX = 1.2;   // hauteur du téléphone (mètres)
-/* ========================================= */
+/* =========================================================== */
+// les fichiers de chaque créature suivent son nom
+for (const t of Object.values(TRAQUES)) { t.image = "grimoire-" + t.cle + ".webp"; t.ombre = "ombre-" + t.cle + ".png"; t.relache = "relache-" + t.cle + ".mp4"; }
+GARDIEN.image = "grimoire-catsith.webp"; GARDIEN.ombre = "ombre-catsith.png"; GARDIEN.relache = "relache-catsith.mp4";
+const FIGURINES = { mothman: ["figurine-mothman.glb"], nessie: ["figurine-nessie.glb"], thunderbird: ["figurine-thunderbird.glb"], barghest: ["figurine-barghest.glb"],
+  faery: ["figurine-faery.glb"], lutins: ["figurine-lutin_green.glb", "figurine-lutin_orange.glb"], jackalope: ["figurine-jackalope.glb"], yeti: ["figurine-yeti.glb"],
+  gargouille: ["figurine-gargouille.glb"], chupacabra: ["figurine-chupacabra.glb"], kraken: ["figurine-kraken.glb"], swamp: ["figurine-swamp.glb"], catsith: ["figurine-catsith.glb"] };
 
 const $ = id => document.getElementById(id);
-const ids = Object.keys(MONSTRES);
-const demande = new URLSearchParams(location.search).get("m");
-let id = MONSTRES[demande] ? demande : null;
-let monstre = id ? MONSTRES[id] : null;
+const ids = Object.keys(TRAQUES);
+const DEG = Math.PI / 180;
+document.querySelectorAll(".ecran").forEach(e => { if (e.id !== "intro") e.prepend($("tpl-decor").content.cloneNode(true)); });
+const montrer = (id) => { ["accueil", "parents", "partie", "intro", "victoire", "grimoire"].forEach(k => $(k).hidden = k !== id); };
 
-document.querySelectorAll(".ecran").forEach(e => e.prepend($("tpl-decor").content.cloneNode(true)));
+/* ===================== Sauvegarde (sur ce téléphone) ===================== */
+const CLES = { partie: "cryptids-partie", pris: "cryptids-pris", relache: "cryptids-relaches", mode: "cryptids-mode", membres: "cryptids-membres", intro: "cryptids-intro-vue", son: "cryptids-son" };
+const lire = (k, def) => { try { const v = localStorage.getItem(k); return v == null ? def : JSON.parse(v); } catch (e) { return def; } };
+const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const pris = () => lire(CLES.pris, []).filter(k => TRAQUES[k]);
+const relaches = () => lire(CLES.relache, []);
+const ajouter = (cle, val) => { const l = lire(cle, []); if (!l.includes(val)) { l.push(val); ecrire(cle, l); } };
+const mode = () => lire(CLES.mode, "qr");
+// une partie = une sélection de créatures à sauver (la collection du grimoire, elle, se garde d'une partie à l'autre)
+const partie = () => lire(CLES.partie, null);
+const enCours = () => { const p = partie(); return p && p.pris.length < p.liste.length ? p : null; };
+function majPartie(f) { const p = partie(); if (!p) return; f(p); ecrire(CLES.partie, p); }
+try { ["monstresPris", "chasseMonstres-inventaire-v2", "chasseMonstres-relaches-v1"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
 
-/* ---------- Inventaire (gardé sur ce téléphone) ---------- */
-const CLE = "chasseMonstres-inventaire-v2";
-try { localStorage.removeItem("monstresPris"); } catch (e) {}
-function lirePris() { try { return JSON.parse(localStorage.getItem(CLE) || "[]").filter(k => MONSTRES[k]); } catch (e) { return []; } }
-function noterPris() { const l = lirePris(); if (!l.includes(id)) l.push(id); try { localStorage.setItem(CLE, JSON.stringify(l)); } catch (e) {} }
-const CLE_RELACHE = "chasseMonstres-relaches-v1";
-function lireRelaches() { try { return JSON.parse(localStorage.getItem(CLE_RELACHE) || "[]"); } catch (e) { return []; } }
-function noterRelache(k) { const l = lireRelaches(); if (!l.includes(k)) l.push(k); try { localStorage.setItem(CLE_RELACHE, JSON.stringify(l)); } catch (e) {} }
-function dessinerPiege() {
-  const pris = lirePris();
-  document.querySelectorAll(".piege").forEach(p => {
-    p.querySelector(".piege-titre").textContent = "Inventaire : " + pris.length + " / " + ids.length;
-    p.querySelector(".cases").innerHTML = ids.map(k =>
-      '<div class="case' + (pris.includes(k) ? " prise" : "") + (k === id && !pris.includes(k) ? " actuelle" : "") +
-      '"><span>' + (pris.includes(k) ? "✓" : "?") + '</span></div>').join("");
-  });
+/* ===================== Sons : musique et bruitages fabriqués par code ===================== */
+let audio = null, maitre = null, musiqueOn = false, sonActif = lire(CLES.son, true);
+const tampons = {};
+function initAudio() {
+  if (audio) { audio.resume(); return; }
+  try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  maitre = audio.createGain(); maitre.gain.value = sonActif ? 1 : 0; maitre.connect(audio.destination);
+  audio.resume();
+  charger("sigil", "sigil.m4a"); charger("cri", "cri-thunderbird.m4a");
+  lancerMusique();
 }
-function dessinerInventaire() {
-  const pris = lirePris(), relaches = lireRelaches();
-  $("compteInventaire").textContent = pris.length + " / " + ids.length + " créatures capturées";
-  $("grille").innerHTML = ids.map((k, i) => {
-    const m = MONSTRES[k], ok = pris.includes(k), derniere = i === ids.length - 1 && ids.length % 2 ? " derniere" : "";
-    return '<div class="carte' + (ok ? " prise" : "") + derniere + '">' +
-      '<img alt="" loading="lazy" src="' + (ok ? m.image : m.ombre) + '"' + (ok ? "" : ' class="ombre"') + '>' +
-      '<div class="nom">' + (ok ? m.court : "???") + '</div>' +
-      '<div class="astuce">' + (ok ? (relaches.includes(k) ? "Relâché dans son monde" : "Capturé !") : "<b>Indice :</b> " + m.indice) + '</div>' +
-      (ok ? (m.duo && !pris.includes(m.duo)
-        ? '<button class="relacher" type="button" disabled>Relâcher</button><div class="astuce">Capture les deux lutins pour les relâcher ensemble.</div>'
-        : '<button class="relacher" type="button" data-k="' + k + '">' + (relaches.includes(k) ? "Revoir" : "Relâcher") + '</button>') : '') + '</div>';
-  }).join("");
+async function charger(nom, url) { try { const r = await fetch(url); tampons[nom] = await audio.decodeAudioData(await r.arrayBuffer()); } catch (e) {} }
+function jouerTampon(nom, vol = 1) { if (!audio || !tampons[nom]) return; const s = audio.createBufferSource(), g = audio.createGain(); g.gain.value = vol; s.buffer = tampons[nom]; s.connect(g).connect(maitre); s.start(); }
+function note(freq, debut, duree, { type = "sine", vol = .2, attaque = .01, sortie = maitre, filtre = 0 } = {}) {
+  if (!audio) return; const t = audio.currentTime + debut, o = audio.createOscillator(), g = audio.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + attaque); g.gain.exponentialRampToValueAtTime(.0008, t + duree);
+  let n = o; if (filtre) { const f = audio.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = filtre; o.connect(f); n = f; }
+  n.connect(g).connect(sortie); o.start(t); o.stop(t + duree + .05);
 }
-let ecranAvantInventaire = null;
-document.querySelectorAll(".ouvrir-inventaire").forEach(b => b.addEventListener("click", () => {
-  dessinerInventaire(); $("inventaire").hidden = false;
+function souffle(debut, duree, de, a, vol = .25) {
+  if (!audio) return; const t = audio.currentTime + debut, n = audio.sampleRate * duree, b = audio.createBuffer(1, n, audio.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  const s = audio.createBufferSource(), f = audio.createBiquadFilter(), g = audio.createGain(); s.buffer = b; f.type = "bandpass"; f.Q.value = 2;
+  f.frequency.setValueAtTime(de, t); f.frequency.exponentialRampToValueAtTime(a, t + duree);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + duree * .3); g.gain.linearRampToValueAtTime(0, t + duree);
+  s.connect(f).connect(g).connect(maitre); s.start(t);
+}
+const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+const SFX = {
+  clic: () => { note(880, 0, .12, { vol: .12 }); note(1320, .03, .1, { vol: .06 }); },
+  oeil: () => { souffle(0, .9, 300, 3000, .2); [62, 66, 69, 74].forEach((m, i) => note(hz(m), .15 + i * .09, 1, { vol: .08, type: "triangle" })); },
+  revele: () => { [74, 78, 81, 86, 90].forEach((m, i) => note(hz(m), i * .07, 1.4, { vol: .09 })); souffle(0, .6, 2000, 6000, .08); },
+  proche: () => note(hz(86), 0, .5, { vol: .05 }),
+  capture: () => { jouerTampon("sigil", .9); note(55, 0, 1.8, { vol: .35, type: "sine" }); },
+  victoire: () => [60, 64, 67, 72, 76, 79, 84].forEach((m, i) => note(hz(m), i * .11, .9, { vol: .12, type: "triangle" })),
+  relache: () => { souffle(0, 1.6, 4000, 400, .18); [84, 79, 76, 72, 67].forEach((m, i) => note(hz(m), .3 + i * .15, 1.2, { vol: .09 })); },
+  figurine: () => [72, 76, 79, 84, 88, 91].forEach((m, i) => note(hz(m), i * .06, 1.6, { vol: .08 })),
+  page: () => { souffle(0, .25, 1500, 600, .1); }
+};
+const sfx = nom => { if (audio && sonActif && SFX[nom]) SFX[nom](); };
+// musique d'ambiance : nappe mystérieuse et clochettes en ré mineur
+function lancerMusique() {
+  if (musiqueOn || !audio) return; musiqueOn = true;
+  const bus = audio.createGain(); bus.gain.value = .11; bus.connect(maitre);
+  const accords = [[50, 57, 62, 65], [46, 53, 58, 62], [41, 48, 53, 57], [45, 52, 57, 61]];
+  const gamme = [62, 64, 65, 69, 70, 72, 74, 77, 81];
+  let i = 0;
+  const mesure = () => {
+    if (!musiqueOn) return;
+    accords[i % 4].forEach(m => { note(hz(m), 0, 4.6, { type: "sawtooth", vol: .05, attaque: 1.4, sortie: bus, filtre: 700 }); note(hz(m) * 1.004, 0, 4.6, { type: "triangle", vol: .05, attaque: 1.4, sortie: bus }); });
+    for (let k = 0; k < 4; k++) if (Math.random() < .75) note(hz(gamme[Math.floor(Math.random() * gamme.length)] + 12), k * 1 + Math.random() * .3, 2.2, { vol: .07, sortie: bus });
+    i++; setTimeout(mesure, 4000);
+  };
+  mesure();
+}
+function majBoutonSon() { $("son").classList.toggle("coupe", !sonActif); $("son").textContent = sonActif ? "♪" : "✕"; }
+$("son").addEventListener("click", () => { sonActif = !sonActif; ecrire(CLES.son, sonActif); initAudio(); if (maitre) maitre.gain.value = sonActif ? 1 : 0; majBoutonSon(); });
+majBoutonSon();
+document.addEventListener("click", e => { if (e.target.closest("button, a")) { initAudio(); if (!e.target.closest("#son, #sceau, #suiteIntro")) sfx("clic"); } }, true);
+
+/* ===================== Accueil, parents ===================== */
+const LIBELLES = { qr: "Mode : QR codes cachés", interieur: "Mode : géolocalisation en intérieur (5 m)", exterieur: "Mode : géolocalisation en extérieur (10 m)" };
+function majModes() {
+  majAccueil(); $("modeParents").textContent = LIBELLES[mode()];
+  $("choixQr").classList.toggle("actif", mode() === "qr"); $("choixGeo").classList.toggle("actif", mode() !== "qr");
+}
+$("ouvrirParents").addEventListener("click", () => { majModes(); montrer("parents"); });
+$("fermerParents").addEventListener("click", () => { majModes(); montrer("accueil"); });
+document.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => { ecrire(CLES.mode, b.dataset.mode); majModes(); }));
+$("raz").addEventListener("click", () => {
+  const b = $("raz");
+  if (!b.dataset.ok) { b.dataset.ok = "1"; b.textContent = "Touchez encore pour tout effacer"; setTimeout(() => { delete b.dataset.ok; b.textContent = "Remettre toute l'aventure à zéro"; }, 4000); return; }
+  [CLES.pris, CLES.relache, CLES.membres, CLES.intro, CLES.partie].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+  delete b.dataset.ok; b.textContent = "Aventure remise à zéro";
+});
+majModes();
+
+/* ===================== Introduction ===================== */
+let pageIntro = 0, ecrit = null;
+function afficherIntro(i) {
+  const txt = INTRO[i], p = $("texteIntro"); clearInterval(ecrit); p.textContent = ""; let n = 0;
+  ecrit = setInterval(() => { n += 2; p.textContent = txt.slice(0, n); if (n >= txt.length) clearInterval(ecrit); }, 28);
+  $("suiteIntro").textContent = i === INTRO.length - 1 ? "Ouvrir l'œil magique" : "Suite";
+  sfx("page");
+}
+function lancerAventure() { initAudio(); if (lire(CLES.intro, false)) return ouvrirOeil(); pageIntro = 0; montrer("intro"); afficherIntro(0); }
+$("commencer").addEventListener("click", () => { initAudio(); preparerChoix(); montrer("partie"); });
+
+/* ===================== Nouvelle partie : combien de cryptides ? ===================== */
+let nombre = Math.max(2, Math.min(12, lire("cryptids-nombre", 6))), tirage = [];
+const melanger = l => { l = l.slice(); for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; } return l; };
+function tirer() { tirage = melanger(ids).slice(0, nombre).sort((a, b) => a - b); }
+function majChoix() {
+  $("nombre").textContent = nombre; $("moins").disabled = nombre <= 2; $("plus").disabled = nombre >= 12;
+  const min = nombre * 4, max = nombre * 7;
+  $("duree").textContent = "Environ " + min + " à " + max + " minutes";
+  document.querySelectorAll("[data-n]").forEach(b => b.classList.toggle("cyan", +b.dataset.n === nombre));
+  if (mode() === "qr") {
+    $("aCacher").hidden = false;
+    $("listeQr").innerHTML = tirage.map(k => "<li><b>n° " + k + "</b> " + TRAQUES[k].nom.split(",")[0] + "</li>").join("");
+  } else $("aCacher").hidden = true;
+}
+function preparerChoix() {
+  const p = enCours();
+  $("reprise").hidden = !p;
+  if (p) $("repriseTexte").textContent = "Partie en cours : " + p.pris.length + " / " + p.liste.length + " cryptides sauvés.";
+  tirer(); majChoix();
+}
+$("moins").addEventListener("click", () => { nombre = Math.max(2, nombre - 1); tirer(); majChoix(); });
+$("plus").addEventListener("click", () => { nombre = Math.min(12, nombre + 1); tirer(); majChoix(); });
+document.querySelectorAll("[data-n]").forEach(b => b.addEventListener("click", () => { nombre = +b.dataset.n; tirer(); majChoix(); }));
+$("retirer").addEventListener("click", () => { tirer(); majChoix(); });
+$("fermerPartie").addEventListener("click", () => { majAccueil(); montrer("accueil"); });
+$("reprendre").addEventListener("click", lancerAventure);
+$("cestParti").addEventListener("click", () => {
+  ecrire("cryptids-nombre", nombre);
+  ecrire(CLES.partie, { liste: tirage, pris: [], membres: {}, debut: Date.now() });
+  history.replaceState(null, "", location.pathname); prochaineTraque.lu = true;
+  lancerAventure();
+});
+function majAccueil() {
+  const p = enCours();
+  $("modeActuel").textContent = LIBELLES[mode()] + (p ? " · partie en cours " + p.pris.length + " / " + p.liste.length : "");
+}
+$("suiteIntro").addEventListener("click", () => {
+  const p = $("texteIntro");
+  if (p.textContent.length < INTRO[pageIntro].length) { clearInterval(ecrit); p.textContent = INTRO[pageIntro]; return; }   // termine la phrase
+  if (pageIntro < INTRO.length - 1) { afficherIntro(++pageIntro); return; }
+  ecrire(CLES.intro, true); ouvrirOeil();
+});
+
+/* ===================== Grimoire ===================== */
+function carte(t, k) {
+  const p = pris().includes(k), r = relaches().includes(t.cle);
+  let actions = "";
+  if (p) actions = r ? '<button class="mini cyan" data-fig="' + t.cle + '">Figurine</button> <button class="mini" data-rel="' + k + '">Revoir</button>'
+                     : '<button class="mini" data-rel="' + k + '">Relâcher</button>';
+  return '<div class="carte' + (p ? " prise" : "") + (r ? " libre" : "") + '">' +
+    '<img alt="" loading="lazy" src="' + (p ? t.image : t.ombre) + '"' + (p ? "" : ' class="ombre"') + '>' +
+    '<div class="nom">' + (p ? t.nom : "???") + '</div>' +
+    '<div class="astuce">' + (p ? (r ? "Relâché dans son monde" : "Sauvé !") : "<b>Indice :</b> " + t.indice) + '</div>' + actions + '</div>';
+}
+function dessinerGrimoire() {
+  const n = pris().length, tousLibres = ids.every(k => relaches().includes(TRAQUES[k].cle));
+  $("compteGrimoire").textContent = n + " / " + ids.length + " cryptides sauvés";
+  $("grille").innerHTML =
+    '<div class="carte gardien prise"><img alt="" src="' + GARDIEN.image + '"><div class="nom">' + GARDIEN.nom + '</div><div class="astuce">' + GARDIEN.texte + '</div>' +
+    (tousLibres ? '<button class="mini cyan" data-fig="catsith">Figurine de Sporran</button>' : '<div class="astuce"><b>Relâche tous les cryptides pour gagner sa figurine.</b></div>') + '</div>' +
+    ids.map(k => carte(TRAQUES[k], k)).join("");
+}
+let retourGrimoire = "accueil";
+document.querySelectorAll(".ouvrir-grimoire").forEach(b => b.addEventListener("click", () => {
+  retourGrimoire = !$("scene").hidden ? "scene" : (!$("victoire").hidden ? "victoire" : "accueil");
+  dessinerGrimoire(); $("grimoire").hidden = false; sfx("page");
 }));
-$("fermerInventaire").addEventListener("click", () => { $("inventaire").hidden = true; });
-$("grille").addEventListener("click", e => { const b = e.target.closest(".relacher"); if (b) relacher(b.dataset.k); });
+$("fermerGrimoire").addEventListener("click", () => { $("grimoire").hidden = true; if (retourGrimoire === "accueil") montrer("accueil"); });
+$("grille").addEventListener("click", e => {
+  const r = e.target.closest("[data-rel]"), f = e.target.closest("[data-fig]");
+  if (r) relacher(r.dataset.rel); if (f) ouvrirFigurine(f.dataset.fig);
+});
 
-/* ---------- Relâcher une créature ---------- */
+/* ===================== Relâcher ===================== */
+let figurineAMontrer = null;
 function relacher(k) {
-  const m = MONSTRES[k], v = $("videoRelache"), img = $("envol");
-  if (m.duo && !lirePris().includes(m.duo)) return;
-  const qui = m.duo ? "Les lutins" : m.court;
-  $("relache").hidden = false; $("finRelache").hidden = true; $("titreRelache").textContent = qui + (m.duo ? " retournent dans leur monde…" : " retourne dans son monde…");
-  const fin = () => { noterRelache(k); if (m.duo) noterRelache(m.duo); $("titreRelache").textContent = qui + (m.duo ? " sont libres !" : " est libre !"); $("finRelache").hidden = false; dessinerInventaire(); };
-  const envol = () => { v.hidden = true; img.hidden = false; img.src = m.image; img.classList.remove("part"); void img.offsetWidth; img.classList.add("part"); setTimeout(fin, 2600); };
+  const t = TRAQUES[k], v = $("videoRelache"), img = $("envol");
+  $("relache").hidden = false; $("voirFigurine").hidden = true; figurineAMontrer = t.cle;
+  $("titreRelache").textContent = t.nom.split(",")[0] + (t.membres.length > 1 ? " retournent dans leur monde…" : " retourne dans son monde…");
+  sfx("relache");
+  const fin = () => {
+    const nouveau = !relaches().includes(t.cle); ajouter(CLES.relache, t.cle);
+    $("titreRelache").textContent = nouveau ? "Figurine débloquée !" : t.nom.split(",")[0] + (t.membres.length > 1 ? " sont libres !" : " est libre !");
+    $("voirFigurine").hidden = false; if (nouveau) sfx("figurine"); dessinerGrimoire();
+  };
+  const envol = () => { v.hidden = true; img.hidden = false; img.src = t.image; img.classList.remove("part"); void img.offsetWidth; img.classList.add("part"); setTimeout(fin, 2600); };
   img.hidden = true; v.hidden = true;
-  if (!m.relache) return envol();
-  v.src = m.relache; v.hidden = false; v.muted = false; v.currentTime = 0;
+  v.src = t.relache; v.hidden = false; v.muted = !sonActif; v.currentTime = 0;
   v.onended = fin; v.onerror = envol;
   v.play().catch(() => { v.muted = true; v.play().catch(envol); });
 }
-$("fermerRelache").addEventListener("click", () => { const v = $("videoRelache"); v.pause(); v.removeAttribute("src"); v.load(); $("relache").hidden = true; });
-$("autre").addEventListener("click", () => { location.href = location.pathname; });
-$("raz").addEventListener("click", () => {
-  const b = $("raz");
-  if (!b.dataset.confirme) { b.dataset.confirme = "1"; b.textContent = "Touche encore pour tout effacer"; setTimeout(() => { delete b.dataset.confirme; b.textContent = "Remettre l'inventaire à zéro"; }, 4000); return; }
-  try { localStorage.removeItem(CLE); } catch (e) {}
-  delete b.dataset.confirme; b.textContent = "Inventaire remis à zéro"; dessinerInventaire(); dessinerPiege();
-});
-dessinerPiege();
+function fermerVideo() { const v = $("videoRelache"); v.pause(); v.removeAttribute("src"); v.load(); $("relache").hidden = true; }
+$("fermerRelache").addEventListener("click", fermerVideo);
+$("voirFigurine").addEventListener("click", () => { fermerVideo(); ouvrirFigurine(figurineAMontrer); });
 
-if (monstre) {
-  const deja = lirePris().includes(id);
-  $("intro").textContent = deja ? "Tu as déjà capturé " + monstre.nom + ". Tu peux le revoir avec l'œil magique."
-                                : "Une créature rôde tout près. Ouvre l'œil magique pour la voir.";
-  $("nomMonstre").textContent = monstre.court;
-} else {
-  $("intro").textContent = "Ouvre l'œil magique et vise le QR code d'une créature cachée dans le parc.";
+/* ===================== Figurine 360° ===================== */
+let fig = null;
+function ouvrirFigurine(cle) {
+  const nom = cle === "catsith" ? GARDIEN.nom : Object.values(TRAQUES).find(t => t.cle === cle).nom;
+  $("figurine").hidden = false; $("figNom").textContent = nom; $("figChargement").hidden = false; sfx("figurine");
+  if (!fig) {
+    const toile = $("figCanvas"), rendu = new THREE.WebGLRenderer({ canvas: toile, alpha: true, antialias: true });
+    rendu.setPixelRatio(Math.min(devicePixelRatio, 2)); rendu.toneMapping = THREE.ACESFilmicToneMapping;
+    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(35, 1, .01, 50);
+    scene.add(new THREE.HemisphereLight(0xe8fbff, 0x20343a, 2.2));
+    const cle1 = new THREE.DirectionalLight(0xffffff, 2.4); cle1.position.set(2, 3, 3); scene.add(cle1);
+    const contre = new THREE.DirectionalLight(0x6fe8ff, 2.2); contre.position.set(-3, 2, -3); scene.add(contre);
+    const socle = new THREE.Mesh(new THREE.CylinderGeometry(.5, .56, .07, 48), new THREE.MeshStandardMaterial({ color: 0x173a42, roughness: .5, metalness: .3 }));
+    socle.position.y = -.04; scene.add(socle);
+    const plateau = new THREE.Group(); scene.add(plateau);
+    fig = { rendu, scene, camera, plateau, angle: 0, vitesse: .4, glisse: null, inclinaison: .15, actif: false };
+    const taille = () => { const w = toile.clientWidth, h = toile.clientHeight; rendu.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); };
+    addEventListener("resize", taille); fig.taille = taille;
+    toile.addEventListener("pointerdown", e => { fig.glisse = { x: e.clientX, y: e.clientY, a: fig.angle, i: fig.inclinaison, t: performance.now() }; toile.setPointerCapture(e.pointerId); fig.vitesse = 0; });
+    toile.addEventListener("pointermove", e => { if (!fig.glisse) return; const dx = e.clientX - fig.glisse.x, dy = e.clientY - fig.glisse.y;
+      const prec = fig.angle; fig.angle = fig.glisse.a + dx * .012; fig.inclinaison = Math.max(-.3, Math.min(.6, fig.glisse.i + dy * .004)); fig.elan = fig.angle - prec; });
+    toile.addEventListener("pointerup", () => { fig.glisse = null; fig.vitesse = Math.max(-6, Math.min(6, (fig.elan || 0) * 60)); });
+    let t0 = performance.now();
+    const boucleFig = () => {
+      if (!fig.actif) return;
+      const t = performance.now(), dt = (t - t0) / 1000; t0 = t;
+      if (!fig.glisse) { fig.vitesse += (.4 - fig.vitesse) * Math.min(1, dt * 1.5); fig.angle += fig.vitesse * dt; }
+      fig.plateau.rotation.y = fig.angle;
+      const d = 3.3 / Math.min(1, fig.camera.aspect * 1.5); fig.camera.position.set(0, .5 + Math.sin(fig.inclinaison) * d, Math.cos(fig.inclinaison) * d); fig.camera.lookAt(0, .5, 0);
+      fig.rendu.render(fig.scene, fig.camera); requestAnimationFrame(boucleFig);
+    };
+    fig.boucle = boucleFig;
+  }
+  fig.taille(); fig.plateau.clear(); fig.angle = 0; fig.vitesse = .4;
+  if (!fig.actif) { fig.actif = true; requestAnimationFrame(fig.boucle); }
+  const fichiers = FIGURINES[cle]; let restants = fichiers.length;
+  fichiers.forEach((f, i) => new GLTFLoader().load(f, g => {
+    const o = g.scene, b = new THREE.Box3().setFromObject(o), s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3());
+    const ech = 1.1 / Math.max(s.y, s.x * 1.1, s.z * 1.1);
+    o.position.set(-c.x, -b.min.y, -c.z); const env = new THREE.Group(); env.add(o); env.scale.setScalar(ech * (fichiers.length > 1 ? .7 : 1));
+    if (fichiers.length > 1) env.position.x = (i ? 1 : -1) * .3;
+    fig.plateau.add(env);
+    if (--restants === 0) $("figChargement").hidden = true;
+  }, undefined, () => { $("figChargement").textContent = "La figurine n'a pas pu se charger."; }));
 }
-$("demarrer").hidden = false;
+$("fermerFigurine").addEventListener("click", () => { $("figurine").hidden = true; fig.actif = false; fig.plateau.clear(); dessinerGrimoire(); });
 
-/* ---------- Sons (Web Audio, débloqués au premier toucher) ---------- */
-let audio = null; const sons = {};
-async function chargerSon(nom, url) {
-  try { const r = await fetch(url); sons[nom] = await audio.decodeAudioData(await r.arrayBuffer()); } catch (e) {}
-}
-function jouer(nom, volume = 1) {
-  if (!audio || !sons[nom]) return;
-  const s = audio.createBufferSource(), g = audio.createGain(); g.gain.value = volume;
-  s.buffer = sons[nom]; s.connect(g).connect(audio.destination); s.start();
-}
-
-/* ---------- Sigil (préchargé une fois, rejoué sans retélécharger) ---------- */
+/* ===================== Sigil (préchargé) ===================== */
 let sigilBlob = null;
 fetch("sigil.webp").then(r => r.blob()).then(b => sigilBlob = b).catch(() => {});
 
-let gyroAutorise = false;
-function lancerChasse() {
-
-/* ---------- Scène 3D ---------- */
-const DEG = Math.PI / 180;
+/* ===================== Moteur de l'œil magique ===================== */
+let moteur = null, traque = null, membreIdx = 0, gyroOK = false, gyro = false, positionGPS = null, cibleGPS = null, cap = null;
 const toile = $("vue");
-const rendu = new THREE.WebGLRenderer({ canvas: toile, alpha: true, antialias: true });
-rendu.setPixelRatio(Math.min(devicePixelRatio, 2));
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 100);
-scene.add(new THREE.HemisphereLight(0xdff6ff, 0x1a2a2a, 2.2));
-const soleil = new THREE.DirectionalLight(0xffffff, 2.0); soleil.position.set(2, 4, 3); scene.add(soleil);
 
-const pivot = new THREE.Group();   // place de la créature dans le parc (regarde toujours le joueur)
-const corps = new THREE.Group();   // la créature (rétrécit à la capture)
-const effets = new THREE.Group();  // effets visuels, en mètres
-pivot.add(corps, effets); scene.add(pivot); pivot.visible = false;
-let cible = null, melangeur = null, action = null, pret = false, materiaux = [], hauteurReelle = monstre.taille;
-
-function redimensionner() {
-  rendu.setSize(innerWidth, innerHeight, false);
-  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-}
-addEventListener("resize", redimensionner); redimensionner();
-
-new GLTFLoader().load(monstre.modele, gltf => {
-  const objet = gltf.scene;
-  const boite = new THREE.Box3().setFromObject(objet), dims = boite.getSize(new THREE.Vector3()), centre = boite.getCenter(new THREE.Vector3());
-  objet.position.set(-centre.x, -boite.min.y, -centre.z);
-  const enveloppe = new THREE.Group(); enveloppe.add(objet);
-  const echelle = monstre.taille / (dims.y || 1);
-  enveloppe.scale.setScalar(echelle); enveloppe.rotation.y = (monstre.cap || 0) * DEG;
-  corps.add(enveloppe);
-  objet.traverse(o => { if (o.isMesh) { o.frustumCulled = false; o.material = o.material.clone(); materiaux.push(o.material); } });
-  const rayonCible = Math.max(dims.x, dims.y, dims.z) * echelle * 0.6;
-  cible = new THREE.Mesh(new THREE.SphereGeometry(rayonCible, 12, 8), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }));
-  cible.position.y = monstre.taille / 2; corps.add(cible);
-  if (gltf.animations.length) { melangeur = new THREE.AnimationMixer(objet); action = melangeur.clipAction(gltf.animations[0]); action.play(); }
-  preparerEffets();
-  pret = true; $("chargement").hidden = true;
-}, ev => {
-  if (ev.total) $("chargement").textContent = "La créature approche… " + Math.round(ev.loaded / ev.total * 100) + " %";
-}, () => { $("chargement").textContent = "La créature n'a pas pu venir. Vérifie le réseau et recharge la page."; });
-
-/* ---------- Textures des effets, dessinées à la volée ---------- */
-function texture(dessin, taille = 128) {
-  const c = document.createElement("canvas"); c.width = c.height = taille; dessin(c.getContext("2d"), taille);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
-}
-const TEX = {
-  doux: texture((g, s) => { const r = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-    r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(.35, "rgba(255,255,255,.55)"); r.addColorStop(1, "rgba(255,255,255,0)");
-    g.fillStyle = r; g.fillRect(0, 0, s, s); }),
-  feuille: texture((g, s) => { g.translate(s / 2, s / 2); g.fillStyle = "#fff";
-    g.beginPath(); g.moveTo(0, -s * .45); g.bezierCurveTo(s * .32, -s * .2, s * .3, s * .25, 0, s * .45); g.bezierCurveTo(-s * .3, s * .25, -s * .32, -s * .2, 0, -s * .45); g.fill();
-    g.strokeStyle = "rgba(0,0,0,.35)"; g.lineWidth = s * .03; g.beginPath(); g.moveTo(0, -s * .4); g.lineTo(0, s * .45); g.stroke(); }),
-  goutte: texture((g, s) => { g.translate(s / 2, s / 2);
-    const r = g.createRadialGradient(-s * .06, s * .08, 0, 0, s * .1, s * .3); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(1, "rgba(150,220,255,.6)");
-    g.fillStyle = r; g.beginPath(); g.moveTo(0, -s * .42); g.bezierCurveTo(s * .2, -s * .1, s * .28, s * .1, s * .22, s * .25);
-    g.arc(0, s * .2, s * .22, 0, Math.PI); g.bezierCurveTo(-s * .28, s * .1, -s * .2, -s * .1, 0, -s * .42); g.fill(); })
-};
-const ECLAIRS = Array.from({ length: 6 }, () => texture((g, s) => {
-  g.strokeStyle = "#e9fbff"; g.shadowColor = "#6fdcff"; g.shadowBlur = s * .06; g.lineCap = "round"; g.lineJoin = "round";
-  const branche = (x, y, a, l, w) => { g.lineWidth = w; g.beginPath(); g.moveTo(x, y);
-    for (let i = 0; i < 7; i++) { x += Math.sin(a) * l / 7 + (Math.random() - .5) * l * .18; y += Math.cos(a) * l / 7; g.lineTo(x, y);
-      if (w > 2 && Math.random() < .25) { g.stroke(); branche(x, y, a + (Math.random() - .5) * 1.6, l * .45, w * .5); g.lineWidth = w; g.beginPath(); g.moveTo(x, y); } }
-    g.stroke(); };
-  branche(s / 2, s * .04, (Math.random() - .5) * .5, s * .9, s * .035); branche(s / 2, s * .04, (Math.random() - .5) * .5, s * .9, s * .012);
-}, 256));
-
-/* ---------- Petit moteur de particules (sprites) ---------- */
-class Particules {
-  constructor(tex, max, { additif = false, couleur = 0xffffff } = {}) {
-    this.libres = []; this.actives = [];
-    for (let i = 0; i < max; i++) {
-      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color: couleur, transparent: true, depthWrite: false,
-        blending: additif ? THREE.AdditiveBlending : THREE.NormalBlending }));
-      s.visible = false; effets.add(s); this.libres.push(s);
-    }
-  }
-  emettre(o) {
-    const s = this.libres.pop(); if (!s) return;
-    s.visible = true; s.position.copy(o.pos); s.material.color.set(o.couleur ?? s.material.color);
-    s.material.rotation = o.angle || 0; s.scale.setScalar(o.taille); s.material.opacity = 0;
-    s.u = { v: o.vit.clone(), vie: o.vie, age: 0, taille: o.taille, croit: o.croit || 0, tourne: o.tourne || 0, g: o.gravite || 0,
-            frein: o.frein || 0, opa: o.opacite ?? 1, apparait: o.apparait || 0.08 };
-    this.actives.push(s);
-  }
-  maj(dt) {
-    for (let i = this.actives.length - 1; i >= 0; i--) {
-      const s = this.actives[i], u = s.u; u.age += dt;
-      if (u.age >= u.vie) { s.visible = false; this.actives.splice(i, 1); this.libres.push(s); continue; }
-      u.v.y -= u.g * dt; u.v.multiplyScalar(1 - u.frein * dt); s.position.addScaledVector(u.v, dt);
-      s.material.rotation += u.tourne * dt;
-      const k = u.age / u.vie; s.scale.setScalar(u.taille * (1 + u.croit * k));
-      s.material.opacity = u.opa * Math.min(1, u.age / u.apparait) * (1 - k * k);
-    }
-  }
-}
-const alea = (a, b) => a + Math.random() * (b - a);
-const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
-const passe = (avant, maintenant, e) => maintenant >= avant ? (e > avant && e <= maintenant) : (e > avant || e <= maintenant);
-
-/* ---------- Effets propres à chaque créature ---------- */
-let majEffets = () => {}, opaciteCorps = 1, apparition = null;
-function preparerEffets() {
-  const T = monstre.taille, systemes = [];
-  const maj = f => { majEffets = (dt, t, tp) => { systemes.forEach(s => s.maj(dt)); f(dt, t, tp); }; };
-  const nouveau = (...a) => { const p = new Particules(...a); systemes.push(p); return p; };
-
-  if (monstre.fx === "lumiere") {           // Mothman : lumière douce devant lui
-    const orbe = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.doux, color: 0xfff2c4, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-    orbe.position.set(0, T * 0.62, 0.75); effets.add(orbe);
-    const lampe = new THREE.PointLight(0xffe6a8, 0, 3); lampe.position.copy(orbe.position); effets.add(lampe);
-    const poussiere = nouveau(TEX.doux, 30, { additif: true, couleur: 0xffe9b0 });
-    maj((dt, t) => {
-      const allume = Math.min(1, Math.max(0, (t - 1.9) / 0.5)) * (1 - Math.min(1, Math.max(0, (t - 5.4) / 0.5)));
-      const pulse = 1 + 0.08 * Math.sin(performance.now() / 180);
-      orbe.scale.setScalar(T * 0.42 * (0.4 + 0.6 * allume) * pulse); orbe.material.opacity = 0.25 + 0.75 * allume; lampe.intensity = 3 * allume;
-      if (Math.random() < dt * 14 * allume) poussiere.emettre({ pos: orbe.position.clone().add(V3(alea(-.1, .1), alea(-.1, .1), alea(-.1, .1))),
-        vit: V3(alea(-.08, .08), alea(.02, .12), alea(-.08, .08)), vie: alea(1, 2), taille: alea(.02, .045) });
-    });
-  }
-  if (monstre.fx === "eau") {               // Nessie : projections de gouttes
-    const gouttes = nouveau(TEX.goutte, 90, { couleur: 0xbfeaff });
-    const gerbe = (n, force) => { for (let i = 0; i < n; i++) { const a = alea(0, Math.PI * 2), r = alea(.15, .6) * T;
-      gouttes.emettre({ pos: V3(Math.cos(a) * r * .6, alea(0, .15), Math.sin(a) * r * .6), vit: V3(Math.cos(a) * alea(.4, 1.4), alea(1.2, 2.6) * force, Math.sin(a) * alea(.4, 1.4)),
-        vie: alea(.7, 1.3), taille: alea(.04, .08), gravite: 4.5 }); } };
-    maj((dt, t, tp) => {
-      (monstre.gouttes || []).forEach(e => { if (passe(tp, t, e)) gerbe(45, 1); });
-      if (Math.random() < dt * 3) gouttes.emettre({ pos: V3(alea(-.4, .4) * T, alea(.1, .4) * T, alea(-.4, .4) * T), vit: V3(0, alea(.1, .4), 0), vie: .6, taille: .035, gravite: 3 });
-    });
-  }
-  if (monstre.fx === "eclairs") {           // Thunderbird : éclairs autour de lui
-    const flash = new THREE.PointLight(0x9fe8ff, 0, 5); flash.position.set(0, T * .6, .5); effets.add(flash);
-    const bolts = ECLAIRS.map(tex => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-      s.visible = false; s.vie = 0; effets.add(s); return s; });
-    const lancer = () => { const s = bolts.find(b => b.vie <= 0); if (!s) return; const a = alea(0, Math.PI * 2), r = alea(.35, .75) * T;
-      s.position.set(Math.cos(a) * r, alea(.2, 1.1) * T, Math.sin(a) * r * .5); s.scale.setScalar(alea(.35, .7) * T);
-      s.material.rotation = alea(-.7, .7); s.vie = alea(.08, .18); s.visible = true; };
-    let cri = 0;
-    maj((dt, t, tp) => {
-      if (monstre.cri != null && passe(tp, t, monstre.cri)) { cri = 1.2; jouer("cri", .9); for (let i = 0; i < 4; i++) lancer(); }
-      cri = Math.max(0, cri - dt);
-      if (Math.random() < dt * (cri > 0 ? 14 : 2.5)) lancer();
-      let on = 0; bolts.forEach(b => { if (b.vie > 0) { b.vie -= dt; on++; b.material.opacity = Math.random() < .3 ? .4 : 1; if (b.vie <= 0) b.visible = false; } });
-      flash.intensity = on ? 4 + Math.random() * 4 : 0;
-    });
-  }
-  if (monstre.fx === "fumee") {             // Barghest : brume, et apparition progressive
-    const fumee = nouveau(TEX.doux, 70, { couleur: 0x8fb3b0 });
-    const bouffee = (n, dense) => { for (let i = 0; i < n; i++) fumee.emettre({
-      pos: V3(alea(-.5, .5) * T * .8, alea(0, .5) * T, alea(-.5, .5) * T), vit: V3(alea(-.08, .08), alea(.04, .16), alea(-.08, .08)),
-      vie: alea(2.5, 4.5), taille: alea(.35, .6) * T, croit: 1.2, opacite: dense ? .55 : .3, apparait: .8, tourne: alea(-.2, .2), angle: alea(0, 6) }); };
-    opaciteCorps = 0; apparition = { debut: null };
-    maj((dt) => {
-      if (Math.random() < dt * 6) bouffee(1, false);
-      if (apparition.debut === null && enVue()) { apparition.debut = performance.now(); bouffee(18, true); }
-      if (apparition.debut !== null) opaciteCorps = Math.min(1, (performance.now() - apparition.debut) / 2500);
-    });
-  }
-  if (monstre.fx === "lueur") {             // Fée : elle brille
-    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.doux, color: 0x9fe6ff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-    halo.position.set(0, T * .55, -.05); effets.add(halo);
-    const lampe = new THREE.PointLight(0xb8f0ff, 2.5, 2.5); lampe.position.set(0, T * .6, .4); effets.add(lampe);
-    const etincelles = nouveau(TEX.doux, 50, { additif: true, couleur: 0xd9f8ff });
-    maj((dt, t, tp) => {
-      const p = 1 + .12 * Math.sin(performance.now() / 260);
-      halo.scale.setScalar(T * 2.2 * p); halo.material.opacity = .55 + .2 * Math.sin(performance.now() / 410);
-      const n = monstre.rire != null && passe(tp, t, monstre.rire) ? 22 : (Math.random() < dt * 10 ? 1 : 0);
-      for (let i = 0; i < n; i++) etincelles.emettre({ pos: V3(alea(-.35, .35) * T, alea(.2, .9) * T, alea(-.2, .2) * T),
-        vit: V3(alea(-.15, .15), alea(.05, .35), alea(-.15, .15)), vie: alea(.8, 1.6), taille: alea(.025, .05) });
-    });
-  }
-  if (monstre.fx === "feuilles") {          // Lutins : feuilles qui s'envolent quand ils bougent
-    const feuilles = nouveau(TEX.feuille, 60);
-    const envol = () => feuilles.emettre({ pos: V3(alea(-.3, .3) * T, alea(0, .35) * T, alea(-.25, .25) * T),
-      vit: V3(alea(-.6, .6), alea(.5, 1.3), alea(-.4, .4)), vie: alea(1.4, 2.4), taille: alea(.05, .09), gravite: .9, frein: .6,
-      tourne: alea(-6, 6), angle: alea(0, 6), couleur: monstre.couleurs[Math.floor(Math.random() * monstre.couleurs.length)] });
-    maj((dt, t, tp) => {
-      const bouge = (monstre.agite || []).some(([a, b]) => t >= a && t <= b);
-      if (Math.random() < dt * (bouge ? 9 : 1)) envol();
-      (monstre.bonds || []).forEach(e => { if (passe(tp, t, e)) for (let i = 0; i < 6; i++) envol(); });
-    });
-  }
+function initMoteur() {
+  if (moteur) return;
+  const rendu = new THREE.WebGLRenderer({ canvas: toile, alpha: true, antialias: true });
+  rendu.setPixelRatio(Math.min(devicePixelRatio, 2));
+  const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(60, 1, .05, 100);
+  const etincelles = [];
+  const tex = (() => { const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d");
+    const r = g.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(.4, "rgba(190,250,255,.6)"); r.addColorStop(1, "rgba(190,250,255,0)");
+    g.fillStyle = r; g.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); return t; })();
+  for (let i = 0; i < 40; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    s.visible = false; scene.add(s); etincelles.push(s); }
+  moteur = { rendu, scene, camera, etincelles, creature: null, horloge: new THREE.Clock() };
+  const taille = () => { rendu.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); };
+  addEventListener("resize", taille); taille(); moteur.taille = taille;
+  requestAnimationFrame(boucle);
 }
 
-/* ---------- Mouvements du téléphone ---------- */
-const axeZ = new THREE.Vector3(0, 0, 1), qEcran = new THREE.Quaternion();
-const qRedresse = new THREE.Quaternion(-Math.sqrt(.5), 0, 0, Math.sqrt(.5)), eulerTel = new THREE.Euler();
-let gyro = false, angleMonstre = null, pris = false;
+// une créature = un plan qui joue sa vidéo (couleur en haut, transparence en bas)
+function creerCreature(m) {
+  const v = document.createElement("video");
+  v.src = m.ar; v.muted = true; v.loop = true; v.playsInline = true; v.setAttribute("playsinline", ""); v.crossOrigin = "anonymous"; v.preload = "auto";
+  // iPhone : la vidéo doit être dans la page pour être décodée
+  v.style.cssText = "position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none"; document.body.appendChild(v);
+  v.play().catch(() => {});
+  const couleur = new THREE.VideoTexture(v), alpha = new THREE.VideoTexture(v);
+  couleur.colorSpace = THREE.SRGBColorSpace;
+  couleur.repeat.set(1, .5); couleur.offset.set(0, .5); alpha.repeat.set(1, .5); alpha.offset.set(0, 0);
+  const mat = new THREE.MeshBasicMaterial({ map: couleur, alphaMap: alpha, transparent: true, depthWrite: false, side: THREE.DoubleSide, opacity: 0 });
+  const plan = new THREE.Mesh(new THREE.PlaneGeometry(m.taille * m.ratio, m.taille), mat);
+  plan.position.y = m.taille / 2;
+  const pivot = new THREE.Group(), corps = new THREE.Group(); corps.add(plan); pivot.add(corps); moteur.scene.add(pivot);
+  return { m, v, plan, mat, pivot, corps, angle: null, trouve: false, tReveal: 0, tApparition: performance.now(), pris: false, tPris: 0, pret: false,
+           detruire() { v.pause(); v.removeAttribute("src"); v.load(); v.remove(); moteur.scene.remove(pivot); couleur.dispose(); alpha.dispose(); mat.dispose(); plan.geometry.dispose(); } };
+}
+
+const quatEcran = new THREE.Quaternion(), qRedresse = new THREE.Quaternion(-Math.sqrt(.5), 0, 0, Math.sqrt(.5)), eulerTel = new THREE.Euler(), axeZ = new THREE.Vector3(0, 0, 1);
 function orientation(e) {
-  if (e.alpha == null || e.beta == null) return;
+  if (e.alpha == null || e.beta == null || !moteur) return;
   gyro = true;
+  if (typeof e.webkitCompassHeading === "number") cap = e.webkitCompassHeading; else if (e.absolute && e.alpha != null) cap = 360 - e.alpha;
   const ecran = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
   eulerTel.set(e.beta * DEG, e.alpha * DEG, -e.gamma * DEG, "YXZ");
-  camera.quaternion.setFromEuler(eulerTel).multiply(qRedresse).multiply(qEcran.setFromAxisAngle(axeZ, -ecran * DEG));
-  if (angleMonstre == null) {
-    const avant = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-    angleMonstre = Math.atan2(-avant.x, -avant.z) + (Math.random() < .5 ? -1 : 1) * (70 + Math.random() * 90) * DEG;
-  }
+  moteur.camera.quaternion.setFromEuler(eulerTel).multiply(qRedresse).multiply(quatEcran.setFromAxisAngle(axeZ, -ecran * DEG));
 }
-const dansCamera = new THREE.Vector3(), proj = new THREE.Vector3();
-function enVue() {
-  const c = pivot.position.clone(); c.y += monstre.taille / 2;
-  dansCamera.copy(c).applyMatrix4(camera.matrixWorldInverse); proj.copy(c).project(camera);
-  return dansCamera.z < 0 && Math.abs(proj.x) < .8 && Math.abs(proj.y) < .9;
+const lacetCamera = () => { const f = new THREE.Vector3(0, 0, -1).applyQuaternion(moteur.camera.quaternion); return Math.atan2(-f.x, -f.z); };
+
+// place la créature hors du champ : il faut se retourner pour la trouver
+function placer(c, angleImpose) {
+  if (!gyro && angleImpose == null) c.angle = (Math.random() - .5) * .5;   // sans capteur de mouvement : devant le joueur
+  else c.angle = angleImpose != null ? angleImpose : lacetCamera() + (Math.random() < .5 ? -1 : 1) * (100 + Math.random() * 70) * DEG;
+  c.distance = mode() === "interieur" ? 2.6 + Math.random() * 1.6 : 3.2 + Math.random() * 1.4;
+}
+const centre = new THREE.Vector3(), dansCam = new THREE.Vector3(), proj = new THREE.Vector3();
+function situation(c) {
+  centre.copy(c.pivot.position); centre.y += c.m.taille / 2;
+  dansCam.copy(centre).applyMatrix4(moteur.camera.matrixWorldInverse); proj.copy(centre).project(moteur.camera);
+  return { devant: dansCam.z < 0, x: proj.x, y: proj.y, gauche: dansCam.x < 0 };
 }
 
-/* ---------- Boucle d'animation ---------- */
-const horloge = new THREE.Clock();
-let finCapture = 0, tPrec = 0;
+let tDebutRecherche = 0, dernierPing = 0;
 function boucle() {
-  const dt = Math.min(horloge.getDelta(), .1), t = horloge.elapsedTime;
-  if (melangeur && !pris) melangeur.update(dt);
-  if (pret) {
-    pivot.visible = true;
-    const D = monstre.distance || 3.5, sol = -YEUX + (monstre.altitude || 0);
-    if (gyro && angleMonstre != null) {
-      const a = angleMonstre + Math.sin(t * .25) * .08;
-      pivot.position.set(-Math.sin(a) * D, sol, -Math.cos(a) * D);
-    } else if (!gyro) {
-      camera.quaternion.identity();
-      pivot.position.set(Math.sin(t * .4) * .5, sol + .5, -D);
-    }
-    pivot.lookAt(camera.position.x, pivot.position.y, camera.position.z);
-    const tAnim = action ? action.time : t;
-    if (!pris) majEffets(dt, tAnim, tPrec); else effets.children.forEach(o => { if (o.material) o.material.opacity *= .9; });
-    tPrec = tAnim;
-    if (materiaux.length) { const o = pris ? Math.max(0, 1 - (performance.now() - finCapture) / 1400) : opaciteCorps;
-      materiaux.forEach(m => { m.transparent = o < 1; m.opacity = o; }); }
-    if (pris) {
-      const k = Math.min(1, (performance.now() - finCapture) / 1400);
-      corps.scale.setScalar(Math.max(.01, 1 - k)); corps.rotation.y += dt * 12 * k; corps.position.y = monstre.taille * .5 * k;
-    }
-    const c = pivot.position.clone(); c.y += monstre.taille / 2;
-    dansCamera.copy(c).applyMatrix4(camera.matrixWorldInverse); proj.copy(c).project(camera);
-    const horsChamp = dansCamera.z > 0 || Math.abs(proj.x) > 1.05;
-    $("gauche").hidden = pris || !horsChamp || dansCamera.x >= 0;
-    $("droite").hidden = pris || !horsChamp || dansCamera.x < 0;
-  }
-  rendu.render(scene, camera);
   requestAnimationFrame(boucle);
+  if ($("scene").hidden) return;
+  const dt = Math.min(moteur.horloge.getDelta(), .1), t = performance.now(), c = moteur.creature;
+  if (!gyro) moteur.camera.quaternion.identity();
+  if (c && c.angle != null) {
+    const sol = -YEUX + (c.m.altitude || 0), a = c.angle + Math.sin(t / 4000) * .05;
+    c.pivot.position.set(-Math.sin(a) * c.distance, sol, -Math.cos(a) * c.distance);
+    c.pivot.lookAt(moteur.camera.position.x, c.pivot.position.y, moteur.camera.position.z);
+    const s = situation(c), visible = s.devant && Math.abs(s.x) < .75 && Math.abs(s.y) < 1.1;
+    // révélation : la créature n'apparaît que lorsqu'on la regarde
+    if (!c.trouve && visible && t - c.tApparition > 900 && c.v.readyState >= 2) {
+      c.trouve = true; c.tReveal = t; sfx("revele"); if (traque.son) jouerTampon("cri", .9);
+      $("consigne").textContent = "Le voilà ! Touche-le ou utilise le sceau magique.";
+      $("nomMonstre").textContent = c.m.nom || traque.nom.split(",")[0]; $("gauche").hidden = $("droite").hidden = true;
+      jaillir(c, 26);
+    }
+    if (!c.pris) c.mat.opacity = c.trouve ? Math.min(1, (t - c.tReveal) / 700) : 0;
+    // indices : petit tintement de plus en plus fréquent quand on s'approche, flèches après un moment
+    if (!c.trouve) {
+      const ecart = Math.abs(Math.atan2(Math.sin(c.angle - lacetCamera()), Math.cos(c.angle - lacetCamera())));
+      const periode = 600 + ecart / Math.PI * 2400;
+      if (t - dernierPing > periode) { dernierPing = t; sfx("proche"); }
+      const aide = t - tDebutRecherche > 12000 && !visible;
+      $("gauche").hidden = !aide || !s.gauche; $("droite").hidden = !aide || s.gauche;
+    }
+    $("sceau").disabled = !c.trouve || c.pris;
+    $("sceau").classList.toggle("pret", c.trouve && !c.pris && visible && Math.abs(s.x) < .45);
+    if (c.pris) {
+      const k = Math.min(1, (t - c.tPris) / 1300);
+      c.corps.scale.setScalar(Math.max(.01, 1 - k)); c.corps.rotation.y += dt * 12 * k; c.corps.position.y = c.m.taille * .5 * k; c.mat.opacity = 1 - k;
+    }
+  }
+  // étincelles
+  moteur.etincelles.forEach(s => { if (!s.visible) return; s.vie -= dt; if (s.vie <= 0) { s.visible = false; return; }
+    s.position.addScaledVector(s.vit, dt); s.vit.y -= dt * .3; s.material.opacity = Math.min(1, s.vie * 2); });
+  if (mode() === "exterieur" && traque && !moteur.creature) majRadar();
+  moteur.rendu.render(moteur.scene, moteur.camera);
+}
+function jaillir(c, n) {
+  for (let i = 0; i < n; i++) { const s = moteur.etincelles.find(x => !x.visible); if (!s) break;
+    s.visible = true; s.vie = .8 + Math.random() * .8; s.scale.setScalar(.05 + Math.random() * .08);
+    s.position.copy(c.pivot.position).add(new THREE.Vector3((Math.random() - .5) * c.m.taille * .8, Math.random() * c.m.taille, (Math.random() - .5) * .4));
+    s.vit = new THREE.Vector3((Math.random() - .5) * .8, Math.random() * .9, (Math.random() - .5) * .8); }
 }
 
 /* ---------- Capture ---------- */
 const rayon = new THREE.Raycaster(), doigt = new THREE.Vector2();
 toile.addEventListener("pointerdown", e => {
-  if (!pret || pris || !cible || opaciteCorps < .5) return;
+  const c = moteur && moteur.creature; if (!c || !c.trouve || c.pris) return;
   doigt.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
-  rayon.setFromCamera(doigt, camera);
-  if (rayon.intersectObject(cible, false).length) capturer();
+  rayon.setFromCamera(doigt, moteur.camera);
+  if (rayon.intersectObject(c.plan, false).length) capturer();
 });
-
+$("sceau").addEventListener("click", () => {
+  const c = moteur && moteur.creature; if (!c || !c.trouve || c.pris) return;
+  const s = situation(c);
+  if (s.devant && Math.abs(s.x) < .6 && Math.abs(s.y) < 1) capturer();
+  else { $("consigne").textContent = "Vise la créature avec l'œil pour utiliser le sceau !"; }
+});
 function capturer() {
-  pris = true; finCapture = performance.now();
+  const c = moteur.creature; c.pris = true; c.tPris = performance.now();
   if (navigator.vibrate) navigator.vibrate(120);
-  jouer("sigil");
-  // le sigil s'ouvre sur la créature
-  const c = pivot.position.clone(); c.y += monstre.taille / 2; c.project(camera);
-  const s = $("sigil");
-  s.style.left = ((c.x + 1) / 2 * innerWidth) + "px"; s.style.top = ((1 - c.y) / 2 * innerHeight) + "px";
+  sfx("capture");
+  centre.copy(c.pivot.position); centre.y += c.m.taille / 2; centre.project(moteur.camera);
+  const s = $("sigil"); s.style.left = ((centre.x + 1) / 2 * innerWidth) + "px"; s.style.top = ((1 - centre.y) / 2 * innerHeight) + "px";
   if (sigilBlob) { if (s.src) URL.revokeObjectURL(s.src); s.src = URL.createObjectURL(sigilBlob); s.hidden = false; }
-  else $("eclair").classList.add("flash");
-  noterPris(); dessinerPiege();
-  $("portrait").src = monstre.image;
   setTimeout(() => $("eclair").classList.add("flash"), 2100);
-  setTimeout(() => {
-    s.hidden = true;
-    const n = lirePris().length;
-    $("compteur").textContent = n >= ids.length ? "Tu as attrapé " + monstre.nom + " !" :
-      "Tu as attrapé " + monstre.nom + ". Plus que " + (ids.length - n) + " à trouver : regarde les indices dans ton inventaire.";
-    $("final").hidden = n < ids.length;
-    $("victoire").hidden = false;
-  }, 2900);
+  setTimeout(() => { s.hidden = true; $("eclair").classList.remove("flash"); apresCapture(); }, 2900);
+}
+function apresCapture() {
+  moteur.creature.detruire(); moteur.creature = null;
+  majPartie(p => { p.membres[traque.id] = membreIdx + 1; });
+  if (membreIdx + 1 < traque.membres.length) {          // les lutins : au tour du second
+    const fait = traque.membres[membreIdx].nom, suivant = traque.membres[membreIdx + 1].nom;
+    membreIdx++; bandeau(fait + " est sauvé ! Mais " + suivant + " se cache encore… Cherche-le !", 3200);
+    sfx("victoire"); setTimeout(lancerMembre, 1500); return;
+  }
+  ajouter(CLES.pris, traque.id); majPartie(p => { if (!p.pris.includes(traque.id)) p.pris.push(traque.id); }); sfx("victoire");
+  $("portrait").src = traque.image; $("ficheNom").textContent = traque.nom; $("ficheTexte").textContent = traque.texte;
+  const p = partie() || { liste: ids, pris: pris() }, n = p.pris.length, total = p.liste.length;
+  $("compteur").textContent = n >= total ? "" : n + " / " + total + " cryptides sauvés dans cette aventure.";
+  $("final").hidden = n < total; $("continuer").hidden = n >= total; $("rejouer").hidden = n < total;
+  $("scene").hidden = true; montrer("victoire");
+}
+function bandeau(texte, duree) { $("bandeau").textContent = texte; $("bandeau").hidden = false; setTimeout(() => $("bandeau").hidden = true, duree); }
+
+/* ---------- Ouverture de l'œil (caméra, mouvements) ---------- */
+function erreur(msg) { bandeau(msg, 6000); }
+async function ouvrirOeil() {
+  initAudio(); sfx("oeil");
+  let attente = Promise.resolve("granted");
+  if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function")
+    attente = DeviceOrientationEvent.requestPermission().catch(() => "denied");
+  montrer(null); $("scene").hidden = false; initMoteur();
+  if (!$("camera").srcObject) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) erreur("La caméra n'est pas accessible : ouvre l'application dans Safari, à une adresse en https.");
+    else try {
+      const flux = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
+      $("camera").srcObject = flux; await $("camera").play().catch(() => {});
+    } catch (e) { erreur("Caméra refusée. Autorise la caméra pour ce site dans les réglages de Safari, puis recharge la page."); }
+  }
+  gyroOK = (await attente) === "granted";
+  if (gyroOK && !orientation.branche) { addEventListener("deviceorientation", orientation); orientation.branche = true; }
+  moteur.taille();
+  prochaineTraque();
+}
+function prochaineTraque() {
+  $("viseur").hidden = true; $("radar").hidden = true; $("gauche").hidden = $("droite").hidden = true;
+  const demande = new URLSearchParams(location.search).get("m");
+  const p = partie() || { liste: ids, pris: [] };
+  if (demande && p.liste.includes(demande) && !p.pris.includes(demande) && !prochaineTraque.lu) { prochaineTraque.lu = true; return demarrerTraque(demande); }
+  prochaineTraque.lu = true;
+  const restantes = p.liste.filter(k => !p.pris.includes(k));
+  if (!restantes.length) { $("nomMonstre").textContent = "Œil magique"; $("consigne").textContent = "Aventure terminée ! Ouvre ton grimoire ou lance une nouvelle aventure."; return; }
+  if (mode() === "qr") return scanner();
+  demarrerTraque(restantes[Math.floor(Math.random() * restantes.length)]);
+}
+function demarrerTraque(k) {
+  traque = Object.assign({ id: k }, TRAQUES[k]);
+  membreIdx = Math.min(((partie() || {}).membres || {})[k] || 0, traque.membres.length - 1);
+  history.replaceState(null, "", "?m=" + k);
+  $("nomMonstre").textContent = "???";
+  lancerMembre();
+}
+function lancerMembre() {
+  const m = traque.membres[membreIdx];
+  if (mode() === "exterieur" && !traque.gpsFait) return chercherGPS();
+  const c = creerCreature(m); moteur.creature = c; placer(c, traque.angleGPS);
+  tDebutRecherche = performance.now();
+  $("nomMonstre").textContent = traque.membres.length > 1 ? m.nom + " (" + (membreIdx + 1) + "/2)" : "???";
+  $("consigne").textContent = gyro || gyroOK ? "Une créature se cache tout près… Tourne sur toi-même et écoute le tintement !" : "Une créature se cache tout près… Regarde bien autour de toi !";
 }
 
-/* ---------- Démarrage de la chasse ---------- */
-  if (monstre.son) chargerSon("cri", monstre.son);
-  $("nomMonstre").textContent = monstre.court;
-  if (gyroAutorise) addEventListener("deviceorientation", orientation);
-  else $("consigne").textContent = PERDU;
-  setTimeout(() => { if (!gyro) $("consigne").textContent = PERDU; }, 1500);
-  if (monstre.fx === "fumee") setTimeout(() => { if ($("consigne").textContent !== PERDU) $("consigne").textContent = "Cherche la brume… il apparaît quand tu le regardes."; }, 1600);
-  $("chargement").hidden = pret;
-  $("accueil").hidden = true; $("scene").hidden = false;
-  new Image().src = monstre.image;   // précharge le portrait
-  redimensionner();
-  requestAnimationFrame(boucle);
-  window.__capturer = () => capturer();
-}
-
-/* ---------- Ouverture de l'œil ---------- */
-function erreur(msg) { $("erreur").textContent = msg; $("erreur").hidden = false; }
-const PERDU = "Suis-la des yeux et touche-la quand elle apparaît !";
-
-$("demarrer").addEventListener("click", async () => {
-  // iOS : sons et mouvements doivent être demandés directement au toucher
-  try { audio = new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); chargerSon("sigil", "sigil.m4a"); } catch (e) {}
-  let attenteGyro = Promise.resolve("granted");
-  if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function") {
-    attenteGyro = DeviceOrientationEvent.requestPermission().catch(() => "denied");
-  }
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    return erreur("La caméra n'est pas accessible : ouvre la page dans Safari, à une adresse en https.");
-  }
-  try {
-    const flux = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
-    $("camera").srcObject = flux;
-    await $("camera").play().catch(() => {});
-  } catch (e) {
-    return erreur("Caméra refusée. Autorise la caméra pour ce site dans les réglages de Safari, puis recharge la page.");
-  }
-  gyroAutorise = (await attenteGyro) === "granted";
-  if (monstre) lancerChasse(); else scanner();
-});
-
-/* ---------- Œil en mode recherche : lecture des QR codes ---------- */
+/* ---------- Mode QR : lecture des codes ---------- */
 function scanner() {
-  $("accueil").hidden = true; $("scene").hidden = false; $("viseur").hidden = false;
-  $("nomMonstre").textContent = "Œil magique";
-  $("consigne").textContent = "Vise le QR code d'une créature.";
-  const video = $("camera"), toile = document.createElement("canvas"), g = toile.getContext("2d", { willReadFrequently: true });
-  const lire = () => {
+  $("viseur").hidden = false; $("nomMonstre").textContent = "Œil magique";
+  $("consigne").textContent = "Vise le QR code d'une créature cachée.";
+  const video = $("camera"), c = document.createElement("canvas"), g = c.getContext("2d", { willReadFrequently: true });
+  const lireQR = () => {
+    if ($("scene").hidden || $("viseur").hidden) return;
     if (video.videoWidth && window.jsQR) {
       const l = 480, h = Math.round(l * video.videoHeight / video.videoWidth);
-      toile.width = l; toile.height = h; g.drawImage(video, 0, 0, l, h);
+      c.width = l; c.height = h; g.drawImage(video, 0, 0, l, h);
       const code = jsQR(g.getImageData(0, 0, l, h).data, l, h, { inversionAttempts: "dontInvert" });
       if (code && code.data) {
         let k = null; try { k = new URL(code.data, location.href).searchParams.get("m"); } catch (e) {}
-        if (k && MONSTRES[k]) {
+        if (k && TRAQUES[k]) {
           if (navigator.vibrate) navigator.vibrate(80);
-          id = k; monstre = MONSTRES[k];
-          history.replaceState(null, "", "?m=" + k);
-          $("viseur").hidden = true; dessinerPiege();
-          $("consigne").textContent = "Tourne sur toi-même pour la trouver, puis touche-la !";
-          lancerChasse(); return;
-        }
-        $("consigne").textContent = "Ce QR code n'appartient pas à la chasse.";
+          const p = partie() || { liste: ids, pris: [] };
+          if (!p.liste.includes(k)) $("consigne").textContent = "Cette créature ne fait pas partie de cette aventure. Cherche un autre QR code.";
+          else if (p.pris.includes(k)) $("consigne").textContent = TRAQUES[k].nom.split(",")[0] + " est déjà sauvé ! Cherche un autre QR code.";
+          else { $("viseur").hidden = true; sfx("oeil"); demarrerTraque(k); return; }
+        } else $("consigne").textContent = "Ce QR code n'appartient pas au grimoire.";
       }
     }
-    setTimeout(lire, 200);
+    setTimeout(lireQR, 220);
   };
-  lire();
+  lireQR();
 }
 
-// pour les tests sur ordinateur, sans caméra
-window.__demarrerSansCamera = () => { gyroAutorise = false; lancerChasse(); };
-</script>
+/* ---------- Mode extérieur : points GPS dans un rayon de 10 m ---------- */
+const R = 6371000;
+function versPoint(o, dist, brg) { const d = dist / R, b = brg * DEG, la1 = o.lat * DEG, lo1 = o.lon * DEG;
+  const la2 = Math.asin(Math.sin(la1) * Math.cos(d) + Math.cos(la1) * Math.sin(d) * Math.cos(b));
+  const lo2 = lo1 + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(la1), Math.cos(d) - Math.sin(la1) * Math.sin(la2));
+  return { lat: la2 / DEG, lon: lo2 / DEG }; }
+function distance(a, b) { const dla = (b.lat - a.lat) * DEG, dlo = (b.lon - a.lon) * DEG;
+  const h = Math.sin(dla / 2) ** 2 + Math.cos(a.lat * DEG) * Math.cos(b.lat * DEG) * Math.sin(dlo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); }
+function relevement(a, b) { const y = Math.sin((b.lon - a.lon) * DEG) * Math.cos(b.lat * DEG);
+  const x = Math.cos(a.lat * DEG) * Math.sin(b.lat * DEG) - Math.sin(a.lat * DEG) * Math.cos(b.lat * DEG) * Math.cos((b.lon - a.lon) * DEG);
+  return (Math.atan2(y, x) / DEG + 360) % 360; }
+let origine = null, suiviGPS = null;
+function chercherGPS() {
+  if (!navigator.geolocation) { traque.gpsFait = true; bandeau("Pas de GPS sur ce téléphone : la créature se cache autour de toi.", 4000); return lancerMembre(); }
+  $("radar").hidden = false; $("radarTexte").textContent = "Recherche du GPS…";
+  $("consigne").textContent = "Suis la boussole : plus tu es chaud, plus la créature est proche.";
+  if (!suiviGPS) suiviGPS = navigator.geolocation.watchPosition(p => {
+    positionGPS = { lat: p.coords.latitude, lon: p.coords.longitude, precision: p.coords.accuracy };
+    if (!origine) origine = positionGPS;
+  }, () => { if (!positionGPS) { traque.gpsFait = true; $("radar").hidden = true; bandeau("Le GPS ne répond pas : la créature se cache autour de toi.", 4000); lancerMembre(); } },
+  { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 });
+  cibleGPS = null;
+}
+function majRadar() {
+  if (!positionGPS) return;
+  if (!cibleGPS) cibleGPS = versPoint(origine || positionGPS, 4 + Math.random() * 6, Math.random() * 360);
+  const d = distance(positionGPS, cibleGPS), brg = relevement(positionGPS, cibleGPS);
+  const seuil = Math.max(3.5, Math.min(8, positionGPS.precision * .7));
+  const mots = d < seuil ? "Brûlant !" : d < seuil + 3 ? "Chaud" : d < seuil + 6 ? "Tiède" : "Froid";
+  $("radarTexte").textContent = mots + " · " + Math.round(d) + " m";
+  const rel = cap != null ? brg - cap : brg;
+  $("radarFleche").style.transform = "rotate(" + rel + "deg)";
+  if (d < seuil && moteur) {
+    // la créature est dans cette direction : on la fait apparaître (cachée, à trouver du regard)
+    traque.gpsFait = true; $("radar").hidden = true;
+    traque.angleGPS = cap != null ? lacetCamera() - (brg - cap) * DEG : null;
+    lancerMembre();
+  }
+}
 
+$("continuer").addEventListener("click", () => { montrer(null); $("scene").hidden = false; history.replaceState(null, "", location.pathname); prochaineTraque.lu = true; prochaineTraque(); });
+$("rejouer").addEventListener("click", () => { $("scene").hidden = true; preparerChoix(); montrer("partie"); });
+$("quitter").addEventListener("click", () => {
+  if (moteur && moteur.creature) { moteur.creature.detruire(); moteur.creature = null; }
+  $("scene").hidden = true; $("viseur").hidden = true; $("radar").hidden = true; majAccueil(); montrer("accueil");
+});
+
+// lien direct vers une traque (QR code scanné avec l'appareil photo) : l'aventure commence tout de suite
+const demandeInitiale = new URLSearchParams(location.search).get("m");
+if (demandeInitiale && TRAQUES[demandeInitiale]) {
+  const p = enCours();
+  $("intro-accueil").textContent = p && p.liste.includes(demandeInitiale) && !p.pris.includes(demandeInitiale)
+    ? "Une créature se cache tout près d'ici… Reprends ton aventure pour la sauver !"
+    : "Une créature se cache tout près d'ici… Commence l'aventure pour la sauver !";
+}
+
+// pour les tests sur ordinateur
+window.__test = { ouvrir: () => { montrer(null); $("scene").hidden = false; initMoteur(); prochaineTraque(); }, capturer: () => capturer(),
+  regarder: () => { const c = moteur.creature; if (c) c.angle = lacetCamera(); } };
+</script>
 </body>
 </html>
