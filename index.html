@@ -75,7 +75,7 @@
   #erreur { color: var(--citrouille); }
 
   /* bouton du son, en haut à droite */
-  .son { position: fixed; z-index: 30; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; width: 46px; height: 46px; border-radius: 50%;
+  .son { position: fixed; z-index: 30; top: calc(10px + env(safe-area-inset-top, 0px)); left: 12px; width: 46px; height: 46px; border-radius: 50%;
     border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.7); color: var(--cyan); font-size: 1.3rem; cursor: pointer; }
   .son.coupe { color: #567; border-color: #345; }
 
@@ -105,7 +105,7 @@
     font-family: var(--titre); font-size: 1.4rem; letter-spacing: .08em; color: var(--cyan); text-shadow: 0 0 10px var(--abysse); }
   .hud-haut { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
     min-width: 0; max-width: calc(100% - 130px); font-size: 1.2rem; padding: 9px 22px 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .quitter { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); left: 12px; width: 46px; height: 46px; border-radius: 50%;
+  .quitter { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; width: 46px; height: 46px; border-radius: 50%;
     border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.7); color: var(--cyan); font-size: 1.3rem; cursor: pointer; z-index: 5; }
   .consigne { position: absolute; left: 16px; right: 16px; bottom: calc(132px + env(safe-area-inset-bottom, 0px));
     text-align: center; font-size: 1.15rem; text-shadow: 0 0 6px var(--abysse), 0 2px 4px var(--abysse); }
@@ -188,6 +188,10 @@
     text-shadow: 0 0 22px rgba(255,176,74,.55); font-variant-numeric: tabular-nums; }
   .liste-qr { margin: 0; padding-left: 20px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 14px; font-size: 1.05rem; }
   .liste-qr b { color: var(--citrouille); font-weight: 600; }
+  .croix { position: absolute; z-index: 20; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; width: 42px; height: 42px; border-radius: 50%;
+    border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.75); color: var(--cyan); font-size: 1.15rem; line-height: 1; cursor: pointer; }
+  .chat-menu { position: absolute; z-index: 1; left: 0; bottom: calc(4px + env(safe-area-inset-bottom, 0px)); width: min(34vw, 170px);
+    pointer-events: none; filter: drop-shadow(0 0 14px rgba(79,243,255,.3)); }
   @media (prefers-reduced-motion: reduce) { .fleche, #eclair.flash, #viseur, #sceau.pret { animation: none; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -227,6 +231,7 @@
 
 <!-- Accueil -->
 <div id="accueil" class="ecran">
+  <img class="chat-menu" src="menu-catsith-1.webp" alt="">
   <div class="contenu">
     <div class="colonne">
       <h1>Cryptids</h1>
@@ -244,6 +249,8 @@
 
 <!-- Nouvelle aventure : combien de cryptides ? -->
 <div id="partie" class="ecran" hidden>
+  <button class="croix" type="button" data-ferme="partie" aria-label="Fermer">✕</button>
+  <img class="chat-menu" src="menu-catsith-2.webp" alt="">
   <div class="contenu defile">
     <h2>Nouvelle aventure</h2>
     <div id="reprise" class="choix" hidden>
@@ -273,6 +280,8 @@
 
 <!-- Préparer le sauvetage (parents) -->
 <div id="parents" class="ecran" hidden>
+  <button class="croix" type="button" data-ferme="parents" aria-label="Fermer">✕</button>
+  <img class="chat-menu" src="menu-catsith-3.webp" alt="">
   <div class="contenu defile">
     <h2>Préparer le sauvetage</h2>
     <p>Pour les parents : choisissez comment les créatures seront cachées.</p>
@@ -302,7 +311,8 @@
 
 <!-- Introduction : Sporran le Cat sìth -->
 <div id="intro" class="ecran" hidden>
-  <img id="guide" src="grimoire-catsith.webp" alt="Sporran, le Cat sìth">
+  <button class="croix" type="button" data-ferme="intro" aria-label="Fermer">✕</button>
+  <img id="guide" src="menu-catsith-1.webp" alt="Sporran, le Cat sìth">
   <div class="bulle">
     <div class="qui">Sporran, le Cat sìth</div>
     <p id="texteIntro"></p>
@@ -340,6 +350,7 @@
 
 <!-- Sauvé ! -->
 <div id="victoire" class="ecran voile" hidden>
+  <button class="croix" type="button" data-ferme="victoire" aria-label="Fermer">✕</button>
   <div class="contenu defile">
     <div class="titre">Sauvé !</div>
     <img id="portrait" class="portrait" alt="">
@@ -356,6 +367,7 @@
 
 <!-- Grimoire -->
 <div id="grimoire" class="ecran" hidden>
+  <button class="croix" type="button" data-ferme="grimoire" aria-label="Fermer">✕</button>
   <div class="contenu defile">
     <h2>Mon grimoire</h2>
     <div class="compte" id="compteGrimoire"></div>
@@ -366,6 +378,7 @@
 
 <!-- Relâcher -->
 <div id="relache" class="plein" hidden>
+  <button class="croix" type="button" data-ferme="relache" aria-label="Fermer">✕</button>
   <video id="videoRelache" playsinline preload="auto" hidden></video>
   <img id="envol" alt="" hidden>
   <div class="plein-bas">
@@ -379,6 +392,7 @@
 
 <!-- Figurine 360° -->
 <div id="figurine" class="plein" hidden>
+  <button class="croix" type="button" data-ferme="figurine" aria-label="Fermer">✕</button>
   <canvas id="figCanvas"></canvas>
   <div class="socle-haut"><div id="figNom" class="nom"></div><div class="aide">Fais-la tourner avec ton doigt</div></div>
   <div id="figChargement" class="plein-titre" hidden>Chargement…</div>
@@ -447,7 +461,7 @@ const INTRO = [
 const YEUX = 1.2;   // hauteur du téléphone (mètres)
 /* =========================================================== */
 // les fichiers de chaque créature suivent son nom
-for (const t of Object.values(TRAQUES)) { t.image = "grimoire-" + t.cle + ".webp"; t.ombre = "ombre-" + t.cle + ".png"; t.relache = "relache-" + t.cle + ".mp4"; }
+for (const t of Object.values(TRAQUES)) { t.image = "solo-" + t.cle + ".webp"; t.ombre = "ombre-" + t.cle + ".png"; t.relache = "relache-" + t.cle + ".mp4"; }
 GARDIEN.image = "grimoire-catsith.webp"; GARDIEN.ombre = "ombre-catsith.png"; GARDIEN.relache = "relache-catsith.mp4";
 const FIGURINES = { mothman: ["figurine-mothman.glb"], nessie: ["figurine-nessie.glb"], thunderbird: ["figurine-thunderbird.glb"], barghest: ["figurine-barghest.glb"],
   faery: ["figurine-faery.glb"], lutins: ["figurine-lutin_green.glb", "figurine-lutin_orange.glb"], jackalope: ["figurine-jackalope.glb"], yeti: ["figurine-yeti.glb"],
@@ -460,7 +474,7 @@ document.querySelectorAll(".ecran").forEach(e => { if (e.id !== "intro") e.prepe
 const montrer = (id) => { ["accueil", "parents", "partie", "intro", "victoire", "grimoire"].forEach(k => $(k).hidden = k !== id); };
 
 /* ===================== Sauvegarde (sur ce téléphone) ===================== */
-const CLES = { partie: "cryptids-partie", pris: "cryptids-pris", relache: "cryptids-relaches", mode: "cryptids-mode", membres: "cryptids-membres", intro: "cryptids-intro-vue", son: "cryptids-son" };
+const CLES = { merci: "cryptids-merci", partie: "cryptids-partie", pris: "cryptids-pris", relache: "cryptids-relaches", mode: "cryptids-mode", membres: "cryptids-membres", intro: "cryptids-intro-vue", son: "cryptids-son" };
 const lire = (k, def) => { try { const v = localStorage.getItem(k); return v == null ? def : JSON.parse(v); } catch (e) { return def; } };
 const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 const pris = () => lire(CLES.pris, []).filter(k => TRAQUES[k]);
@@ -509,7 +523,13 @@ const SFX = {
   proche: () => note(hz(86), 0, .5, { vol: .05 }),
   capture: () => { jouerTampon("sigil", .9); note(55, 0, 1.8, { vol: .35, type: "sine" }); },
   victoire: () => [60, 64, 67, 72, 76, 79, 84].forEach((m, i) => note(hz(m), i * .11, .9, { vol: .12, type: "triangle" })),
-  relache: () => { souffle(0, 1.6, 4000, 400, .18); [84, 79, 76, 72, 67].forEach((m, i) => note(hz(m), .3 + i * .15, 1.2, { vol: .09 })); },
+  relache: () => {
+    [38, 45, 50].forEach(m => note(hz(m), 0, 5.5, { type: "sawtooth", vol: .07, attaque: 2.2, filtre: 420 }));   // nappe grave
+    note(hz(61), .4, 5, { type: "triangle", vol: .04, attaque: 2.5 });                                          // note étrange (triton)
+    souffle(0, 3.2, 300, 5200, .14);                                                                             // souffle qui monte
+    [74, 77, 73, 70, 69].forEach((m, i) => { const d = 1.6 + i * .55;                                            // clochettes en mineur
+      note(hz(m), d, 2.4, { vol: .07 }); note(hz(m), d + .32, 2, { vol: .03 }); note(hz(m), d + .64, 1.6, { vol: .015 }); });
+  },
   figurine: () => [72, 76, 79, 84, 88, 91].forEach((m, i) => note(hz(m), i * .06, 1.6, { vol: .08 })),
   page: () => { souffle(0, .25, 1500, 600, .1); }
 };
@@ -642,19 +662,42 @@ function relacher(k) {
   $("relache").hidden = false; $("voirFigurine").hidden = true; figurineAMontrer = t.cle;
   $("titreRelache").textContent = t.nom.split(",")[0] + (t.membres.length > 1 ? " retournent dans leur monde…" : " retourne dans son monde…");
   sfx("relache");
+  let fini = false, envole = false;
   const fin = () => {
+    if (fini) return; fini = true;
     const nouveau = !relaches().includes(t.cle); ajouter(CLES.relache, t.cle);
     $("titreRelache").textContent = nouveau ? "Figurine débloquée !" : t.nom.split(",")[0] + (t.membres.length > 1 ? " sont libres !" : " est libre !");
     $("voirFigurine").hidden = false; if (nouveau) sfx("figurine"); dessinerGrimoire();
+    if (ids.every(k => relaches().includes(TRAQUES[k].cle)) && !lire(CLES.merci, false)) setTimeout(merci, 2200);
   };
-  const envol = () => { v.hidden = true; img.hidden = false; img.src = t.image; img.classList.remove("part"); void img.offsetWidth; img.classList.add("part"); setTimeout(fin, 2600); };
+  const envol = () => { if (envole) return; envole = true; v.hidden = true; img.hidden = false; img.src = t.image; img.classList.remove("part"); void img.offsetWidth; img.classList.add("part"); setTimeout(fin, 2600); };
   img.hidden = true; v.hidden = true;
   v.src = t.relache; v.hidden = false; v.muted = !sonActif; v.currentTime = 0;
   v.onended = fin; v.onerror = envol;
   v.play().catch(() => { v.muted = true; v.play().catch(envol); });
 }
+// tous les cryptides sont libres : Sporran remercie le joueur dans son monde
+function merci() {
+  const v = $("videoRelache"); ecrire(CLES.merci, true);
+  $("relache").hidden = false; $("envol").hidden = true; $("voirFigurine").hidden = true; figurineAMontrer = "catsith";
+  $("titreRelache").textContent = "Sporran te remercie !"; sfx("victoire");
+  let fini = false;
+  const fin = () => { if (fini) return; fini = true; $("titreRelache").textContent = "Merci d'avoir sauvé tous les cryptides ! Figurine de Sporran débloquée !"; $("voirFigurine").hidden = false; sfx("figurine"); dessinerGrimoire(); };
+  v.src = "merci-catsith.mp4"; v.hidden = false; v.muted = !sonActif; v.currentTime = 0; v.onended = fin; v.onerror = fin;
+  v.play().catch(() => { v.muted = true; v.play().catch(fin); });
+}
 function fermerVideo() { const v = $("videoRelache"); v.pause(); v.removeAttribute("src"); v.load(); $("relache").hidden = true; }
 $("fermerRelache").addEventListener("click", fermerVideo);
+document.querySelectorAll(".croix").forEach(b => b.addEventListener("click", () => {
+  const cible = b.dataset.ferme;
+  if (cible === "relache") return fermerVideo();
+  if (cible === "figurine") return $("fermerFigurine").click();
+  if (cible === "grimoire") return $("fermerGrimoire").click();
+  if (cible === "parents") return $("fermerParents").click();
+  if (cible === "partie") return $("fermerPartie").click();
+  if (cible === "intro") { clearInterval(ecrit); return montrer("accueil"); }
+  if (cible === "victoire") { majAccueil(); return montrer("accueil"); }
+}));
 $("voirFigurine").addEventListener("click", () => { fermerVideo(); ouvrirFigurine(figurineAMontrer); });
 
 /* ===================== Figurine 360° ===================== */
