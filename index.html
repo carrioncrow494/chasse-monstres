@@ -190,7 +190,7 @@
   .liste-qr b { color: var(--citrouille); font-weight: 600; }
   .croix { position: absolute; z-index: 20; top: calc(10px + env(safe-area-inset-top, 0px)); right: 12px; width: 42px; height: 42px; border-radius: 50%;
     border: 2px solid rgba(79,243,255,.5); background: rgba(2,10,14,.75); color: var(--cyan); font-size: 1.15rem; line-height: 1; cursor: pointer; }
-  .chat-menu { position: absolute; z-index: 1; left: 0; bottom: calc(4px + env(safe-area-inset-bottom, 0px)); width: min(26vw, 130px); opacity: .9;
+  .chat-menu { position: absolute; z-index: 1; left: 0; bottom: calc(4px + env(safe-area-inset-bottom, 0px)); width: min(40vw, 200px);
     pointer-events: none; filter: drop-shadow(0 0 14px rgba(79,243,255,.3)); }
   .onglets { display: flex; gap: 10px; }
   .grille-choix { width: 100%; max-width: 520px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
@@ -202,6 +202,12 @@
   .choix-carte.coche { border-color: var(--citrouille); box-shadow: 0 0 12px rgba(255,176,74,.35); }
   .choix-carte.coche img { opacity: 1; filter: brightness(0) drop-shadow(0 0 6px rgba(255,176,74,.9)); }
   .choix-carte.coche::after { content: "✓"; display: grid; place-items: center; background: var(--citrouille); border-color: var(--citrouille); color: #04121a; font-weight: 700; font-size: .9rem; }
+  .carte-mode { cursor: pointer; transition: opacity .3s, transform .15s; }
+  .carte-mode.eteint { opacity: .35; filter: grayscale(.7); }
+  .carte-mode.actif::after { content: "✓ Choisi"; align-self: flex-end; font-family: var(--titre); letter-spacing: .08em; color: var(--citrouille); }
+  .chat-entree { width: min(60vw, 280px); filter: drop-shadow(0 0 18px rgba(79,243,255,.4)); }
+  .clignote { animation: pouls 1.6s ease-in-out infinite; font-size: 1.25rem; }
+  #entree { z-index: 40; cursor: pointer; }
   .planche:disabled { opacity: .35; filter: grayscale(.6); }
   /* retour visuel quand on touche un bouton */
   .appuye { animation: appuye .45s ease-out; }
@@ -243,8 +249,17 @@
   </svg>
 </template>
 
+<!-- Entrée : le premier toucher lance la musique -->
+<div id="entree" class="ecran">
+  <div class="contenu">
+    <h1>Cryptids</h1>
+    <img class="chat-entree" src="menu-catsith-2.webp" alt="">
+    <p class="clignote">Touche l'écran pour ouvrir le grimoire</p>
+  </div>
+</div>
+
 <!-- Accueil -->
-<div id="accueil" class="ecran">
+<div id="accueil" class="ecran" hidden>
   <img class="chat-menu" src="menu-catsith-1.webp" alt="">
   <div class="contenu">
     <div class="colonne">
@@ -310,23 +325,18 @@
   <div class="contenu defile">
     <h2>Préparer le sauvetage</h2>
     <p>Pour les parents : choisissez comment les créatures seront cachées.</p>
-    <div id="choixQr" class="choix">
+    <div class="choix carte-mode" data-mode="qr" role="button" tabindex="0">
       <h3>QR codes à cacher</h3>
       <p>Imprimez la planche, découpez les cartes et cachez-les où vous voulez. Les enfants les trouvent puis les visent avec l'œil magique.</p>
-      <div class="boutons">
-        <a class="mini cyan" href="qr-codes-cryptids.pdf" target="_blank" rel="noopener">Planche à imprimer</a>
-        <button class="mini" type="button" data-mode="qr">Choisir ce mode</button>
-      </div>
+      <div class="boutons"><a class="mini cyan" href="qr-codes-cryptids.pdf" target="_blank" rel="noopener">Planche à imprimer</a></div>
     </div>
-    <div id="choixGeo" class="choix">
-      <h3>Géolocalisation</h3>
-      <p>Pas de papier : les créatures sont dispersées autour de vous.</p>
-      <p><b>Intérieur</b> : dans un rayon de 5 m. Le GPS ne fonctionne pas dans une maison, alors les créatures apparaissent une à une autour de l'enfant : il doit tourner sur lui-même pour les trouver.</p>
-      <p><b>Extérieur</b> : de vrais points GPS dans un rayon de 10 m, avec une boussole « froid / chaud ». La précision d'un téléphone est de quelques mètres : restez dans un endroit dégagé.</p>
-      <div class="boutons">
-        <button class="mini" type="button" data-mode="interieur">Intérieur (5 m)</button>
-        <button class="mini" type="button" data-mode="exterieur">Extérieur (10 m)</button>
-      </div>
+    <div class="choix carte-mode" data-mode="interieur" role="button" tabindex="0">
+      <h3>Géolocalisation · intérieur</h3>
+      <p>Dans un rayon de 5 m, sans papier. Le GPS ne fonctionne pas dans une maison : les créatures apparaissent une à une autour de l'enfant, qui doit tourner sur lui-même pour les trouver.</p>
+    </div>
+    <div class="choix carte-mode" data-mode="exterieur" role="button" tabindex="0">
+      <h3>Géolocalisation · extérieur</h3>
+      <p>De vrais points GPS dans un rayon de 10 m, avec une boussole « froid / chaud ». La précision d'un téléphone est de quelques mètres : restez dans un endroit dégagé.</p>
     </div>
     <p id="modeParents" class="etat"></p>
     <button id="fermerParents" class="planche petit" type="button">Retour</button>
@@ -496,7 +506,7 @@ const $ = id => document.getElementById(id);
 const ids = Object.keys(TRAQUES);
 const DEG = Math.PI / 180;
 document.querySelectorAll(".ecran").forEach(e => { if (e.id !== "intro") e.prepend($("tpl-decor").content.cloneNode(true)); });
-const montrer = (id) => { ["accueil", "parents", "partie", "intro", "victoire", "grimoire"].forEach(k => $(k).hidden = k !== id); if (id && typeof changerAmbiance === "function") changerAmbiance("menu"); };
+const montrer = (id) => { ["entree", "accueil", "parents", "partie", "intro", "victoire", "grimoire"].forEach(k => $(k).hidden = k !== id); if (id && typeof changerAmbiance === "function") changerAmbiance("menu"); };
 
 /* ===================== Sauvegarde (sur ce téléphone) ===================== */
 const CLES = { merci: "cryptids-merci", partie: "cryptids-partie", pris: "cryptids-pris", relache: "cryptids-relaches", mode: "cryptids-mode", membres: "cryptids-membres", intro: "cryptids-intro-vue", son: "cryptids-son" };
@@ -658,11 +668,15 @@ document.addEventListener("pointerdown", e => { const b = e.target.closest("butt
 const LIBELLES = { qr: "Mode : QR codes cachés", interieur: "Mode : géolocalisation en intérieur (5 m)", exterieur: "Mode : géolocalisation en extérieur (10 m)" };
 function majModes() {
   majAccueil(); $("modeParents").textContent = LIBELLES[mode()];
-  $("choixQr").classList.toggle("actif", mode() === "qr"); $("choixGeo").classList.toggle("actif", mode() !== "qr");
+  document.querySelectorAll(".carte-mode").forEach(c => { c.classList.toggle("actif", c.dataset.mode === mode()); c.classList.toggle("eteint", c.dataset.mode !== mode()); });
 }
 $("ouvrirParents").addEventListener("click", () => { majModes(); montrer("parents"); });
 $("fermerParents").addEventListener("click", () => { majModes(); montrer("accueil"); });
-document.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => { ecrire(CLES.mode, b.dataset.mode); majModes(); }));
+document.querySelectorAll(".carte-mode").forEach(b => b.addEventListener("click", e => {
+  if (e.target.closest("a")) return;   // le lien de la planche reste un lien
+  ecrire(CLES.mode, b.dataset.mode); majModes(); sfx("valider");
+  setTimeout(() => { majAccueil(); montrer("accueil"); }, 900);
+}));
 $("raz").addEventListener("click", () => {
   const b = $("raz");
   if (!b.dataset.ok) { b.dataset.ok = "1"; b.textContent = "Touchez encore pour tout effacer"; setTimeout(() => { delete b.dataset.ok; b.textContent = "Remettre toute l'aventure à zéro"; }, 4000); return; }
@@ -670,6 +684,7 @@ $("raz").addEventListener("click", () => {
   delete b.dataset.ok; b.textContent = "Aventure remise à zéro";
 });
 majModes();
+$("entree").addEventListener("click", () => { initAudio(); changerAmbiance("menu"); sfx("valider"); majAccueil(); montrer("accueil"); });
 
 /* ===================== Introduction ===================== */
 let pageIntro = 0, ecrit = null;
@@ -687,11 +702,12 @@ function afficherIntro(i) {
   const txt = INTRO[i], p = $("texteIntro"); clearInterval(ecrit); p.textContent = ""; let n = 0;
   parler(txt);
   ecrit = setInterval(() => { n += 2; p.textContent = txt.slice(0, n); if (n >= txt.length) clearInterval(ecrit); }, 28);
-  $("suiteIntro").textContent = i === INTRO.length - 1 ? "Ouvrir l'œil magique" : "Suite";
+  $("suiteIntro").textContent = i === INTRO.length - 1 ? "À l'aventure !" : "Suite";
   sfx("page");
 }
-function lancerAventure(avecIntro) { initAudio(); if (!avecIntro) return ouvrirOeil(); pageIntro = 0; montrer("intro"); afficherIntro(0); }
-$("commencer").addEventListener("click", () => { initAudio(); preparerChoix(); montrer("partie"); });
+function lancerAventure() { initAudio(); ouvrirOeil(); }
+$("commencer").addEventListener("click", () => { initAudio(); pageIntro = 0; montrer("intro"); afficherIntro(0); });
+function apresIntro() { clearInterval(ecrit); taire(); ecrire(CLES.intro, true); preparerChoix(); montrer("partie"); }
 
 /* ===================== Nouvelle partie : combien de cryptides ? ===================== */
 let nombre = Math.max(2, Math.min(12, lire("cryptids-nombre", 6))), tirage = [];
@@ -747,12 +763,12 @@ function majAccueil() {
   const p = enCours();
   $("modeActuel").textContent = LIBELLES[mode()] + (p ? " · partie en cours " + p.pris.length + " / " + p.liste.length : "");
 }
-$("passerIntro").addEventListener("click", () => { clearInterval(ecrit); taire(); ecrire(CLES.intro, true); ouvrirOeil(); });
+$("passerIntro").addEventListener("click", apresIntro);
 $("suiteIntro").addEventListener("click", () => {
   const p = $("texteIntro");
   if (p.textContent.length < INTRO[pageIntro].length) { clearInterval(ecrit); p.textContent = INTRO[pageIntro]; return; }   // termine la phrase
   if (pageIntro < INTRO.length - 1) { afficherIntro(++pageIntro); return; }
-  ecrire(CLES.intro, true); taire(); ouvrirOeil();
+  apresIntro();
 });
 
 /* ===================== Grimoire ===================== */
@@ -771,7 +787,7 @@ function dessinerGrimoire() {
   $("compteGrimoire").textContent = n + " / " + ids.length + " cryptides sauvés";
   $("grille").innerHTML =
     '<div class="carte gardien prise"><img alt="" src="' + GARDIEN.image + '"><div class="nom">' + GARDIEN.nom + '</div><div class="astuce">' + GARDIEN.texte + '</div>' +
-    (tousLibres ? '<button class="mini cyan" data-fig="catsith">Figurine de Sporran</button>' : '<div class="astuce"><b>Relâche tous les cryptides pour gagner sa figurine.</b></div>') + '</div>' +
+    (tousLibres ? '<button class="mini cyan" data-fig="catsith">Figurine de Sporran</button>' + (lire(CLES.merci, false) ? ' <button class="mini" data-merci="1">Revoir son message</button>' : '') : '<div class="astuce"><b>Relâche tous les cryptides pour gagner sa figurine.</b></div>') + '</div>' +
     ids.map(k => carte(TRAQUES[k], k)).join("");
 }
 let retourGrimoire = "accueil";
@@ -799,7 +815,7 @@ function relacher(k) {
     const nouveau = !relaches().includes(t.cle); ajouter(CLES.relache, t.cle);
     $("titreRelache").textContent = nouveau ? "Figurine débloquée !" : t.nom.split(",")[0] + (t.membres.length > 1 ? " sont libres !" : " est libre !");
     $("voirFigurine").hidden = false; if (nouveau) sfx("figurine"); dessinerGrimoire();
-    if (ids.every(k => relaches().includes(TRAQUES[k].cle)) && !lire(CLES.merci, false)) setTimeout(merci, 2200);
+    if (ids.every(k => relaches().includes(TRAQUES[k].cle)) && !lire(CLES.merci, false)) merciEnAttente = true;
   };
   const envol = () => { if (envole) return; envole = true; v.hidden = true; img.hidden = false; img.src = t.image; img.classList.remove("part"); void img.offsetWidth; img.classList.add("part"); setTimeout(fin, 2600); };
   img.hidden = true; v.hidden = true;
@@ -808,6 +824,7 @@ function relacher(k) {
   v.play().catch(() => { v.muted = true; v.play().catch(envol); });
 }
 // tous les cryptides sont libres : Sporran remercie le joueur dans son monde
+let merciEnAttente = false;
 function merci() {
   changerAmbiance("silence");
   const v = $("videoRelache"); ecrire(CLES.merci, true);
@@ -818,8 +835,11 @@ function merci() {
   v.src = "merci-catsith.mp4"; v.hidden = false; v.muted = !sonActif; v.currentTime = 0; v.onended = fin; v.onerror = fin;
   v.play().catch(() => { v.muted = true; v.play().catch(fin); });
 }
-function fermerVideo() { changerAmbiance("menu"); const v = $("videoRelache"); v.pause(); v.removeAttribute("src"); v.load(); $("relache").hidden = true; }
-$("fermerRelache").addEventListener("click", fermerVideo);
+function fermerVideo(versFigurine) {
+  if (merciEnAttente && !versFigurine) { merciEnAttente = false; const v = $("videoRelache"); v.pause(); return setTimeout(merci, 300); }
+  changerAmbiance("menu"); const v = $("videoRelache"); v.pause(); v.removeAttribute("src"); v.load(); $("relache").hidden = true; }
+$("fermerRelache").addEventListener("click", () => fermerVideo(false));
+$("grille").addEventListener("click", e => { if (e.target.closest("[data-merci]")) merci(); });
 document.querySelectorAll(".croix").forEach(b => b.addEventListener("click", () => {
   const cible = b.dataset.ferme;
   if (cible === "relache") return fermerVideo();
@@ -830,7 +850,7 @@ document.querySelectorAll(".croix").forEach(b => b.addEventListener("click", () 
   if (cible === "intro") { clearInterval(ecrit); taire(); return montrer("accueil"); }
   if (cible === "victoire") { majAccueil(); return montrer("accueil"); }
 }));
-$("voirFigurine").addEventListener("click", () => { fermerVideo(); ouvrirFigurine(figurineAMontrer); });
+$("voirFigurine").addEventListener("click", () => { fermerVideo(true); ouvrirFigurine(figurineAMontrer); });
 
 /* ===================== Figurine 360° ===================== */
 let fig = null;
@@ -877,7 +897,8 @@ function ouvrirFigurine(cle) {
     if (--restants === 0) $("figChargement").hidden = true;
   }, undefined, () => { $("figChargement").textContent = "La figurine n'a pas pu se charger."; }));
 }
-$("fermerFigurine").addEventListener("click", () => { $("figurine").hidden = true; fig.actif = false; fig.plateau.clear(); dessinerGrimoire(); });
+$("fermerFigurine").addEventListener("click", () => { $("figurine").hidden = true; fig.actif = false; fig.plateau.clear(); dessinerGrimoire();
+  if (merciEnAttente) { merciEnAttente = false; setTimeout(merci, 300); } });
 
 /* ===================== Sigil (préchargé) ===================== */
 let sigilBlob = null;
