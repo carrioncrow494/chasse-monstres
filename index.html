@@ -316,7 +316,7 @@
   <div class="bulle">
     <div class="qui">Sporran, le Cat sìth</div>
     <p id="texteIntro"></p>
-    <div class="boutons"><button id="suiteIntro" class="planche petit" type="button">Suite</button></div>
+    <div class="boutons"><button id="passerIntro" class="lien" type="button">Passer</button><button id="suiteIntro" class="planche petit" type="button">Suite</button></div>
   </div>
 </div>
 
@@ -471,7 +471,7 @@ const $ = id => document.getElementById(id);
 const ids = Object.keys(TRAQUES);
 const DEG = Math.PI / 180;
 document.querySelectorAll(".ecran").forEach(e => { if (e.id !== "intro") e.prepend($("tpl-decor").content.cloneNode(true)); });
-const montrer = (id) => { ["accueil", "parents", "partie", "intro", "victoire", "grimoire"].forEach(k => $(k).hidden = k !== id); };
+const montrer = (id) => { ["accueil", "parents", "partie", "intro", "victoire", "grimoire"].forEach(k => $(k).hidden = k !== id); if (id && typeof changerAmbiance === "function") changerAmbiance("menu"); };
 
 /* ===================== Sauvegarde (sur ce téléphone) ===================== */
 const CLES = { merci: "cryptids-merci", partie: "cryptids-partie", pris: "cryptids-pris", relache: "cryptids-relaches", mode: "cryptids-mode", membres: "cryptids-membres", intro: "cryptids-intro-vue", son: "cryptids-son" };
@@ -535,23 +535,58 @@ const SFX = {
 };
 const sfx = nom => { if (audio && sonActif && SFX[nom]) SFX[nom](); };
 // musique d'ambiance : nappe mystérieuse et clochettes en ré mineur
+// deux musiques : une petite valse de boîte à musique un peu inquiétante pour les menus, une nappe discrète pendant la traque
+let busMenu = null, busChasse = null, ambiance = "menu", tMesure = 0, mesureN = 0;
+const VALSE = {   // ré mineur, 3 temps ; [note, durée en temps]
+  melodie: [[[69,1],[74,1],[77,1]], [[76,1],[74,1],[73,1]], [[74,1],[67,1],[70,1]], [[69,3]],
+            [[69,1],[74,1],[77,1]], [[79,1],[77,1],[76,1]], [[77,1],[76,1],[74,1]], [[73,2],[69,1]],
+            [[81,1],[77,1],[74,1]], [[82,1],[79,1],[76,1]], [[81,1],[77,1],[73,1]], [[74,3]]],
+  basses: [38, 38, 43, 45, 38, 46, 43, 45, 38, 43, 45, 38],
+  accords: [[50,53,57],[50,53,57],[55,58,62],[49,52,55],[50,53,57],[46,50,53],[52,55,58],[49,52,57],[50,53,57],[55,58,62],[49,52,55],[50,53,57]]
+};
 function lancerMusique() {
   if (musiqueOn || !audio) return; musiqueOn = true;
-  const bus = audio.createGain(); bus.gain.value = .11; bus.connect(maitre);
-  const accords = [[50, 57, 62, 65], [46, 53, 58, 62], [41, 48, 53, 57], [45, 52, 57, 61]];
-  const gamme = [62, 64, 65, 69, 70, 72, 74, 77, 81];
-  let i = 0;
-  const mesure = () => {
-    if (!musiqueOn) return;
-    accords[i % 4].forEach(m => { note(hz(m), 0, 4.6, { type: "sawtooth", vol: .05, attaque: 1.4, sortie: bus, filtre: 700 }); note(hz(m) * 1.004, 0, 4.6, { type: "triangle", vol: .05, attaque: 1.4, sortie: bus }); });
-    for (let k = 0; k < 4; k++) if (Math.random() < .75) note(hz(gamme[Math.floor(Math.random() * gamme.length)] + 12), k * 1 + Math.random() * .3, 2.2, { vol: .07, sortie: bus });
-    i++; setTimeout(mesure, 4000);
-  };
-  mesure();
+  busMenu = audio.createGain(); busMenu.gain.value = .2; busMenu.connect(maitre);
+  busChasse = audio.createGain(); busChasse.gain.value = 0; busChasse.connect(maitre);
+  // écho léger pour la boîte à musique
+  const echo = audio.createDelay(); echo.delayTime.value = .33; const retour = audio.createGain(); retour.gain.value = .32;
+  busMenu.connect(echo); echo.connect(retour); retour.connect(echo); retour.connect(maitre);
+  tMesure = audio.currentTime + .1; programmer();
+}
+function programmer() {
+  if (!musiqueOn) return;
+  const temps = .52;   // ~115 battements par minute
+  while (tMesure < audio.currentTime + 1.2) {
+    const i = mesureN % 12, d = tMesure - audio.currentTime;
+    // valse (menus) : basse pizzicato, accords légers, mélodie de boîte à musique
+    note(hz(VALSE.basses[i]), d, .45, { type: "triangle", vol: .22, sortie: busMenu });
+    [1, 2].forEach(t => VALSE.accords[i].forEach(m => note(hz(m), d + t * temps, .3, { type: "sine", vol: .045, sortie: busMenu })));
+    let pos = 0;
+    VALSE.melodie[i].forEach(([m, l]) => { note(hz(m + 12), d + pos * temps, .9 + l * .3, { vol: .07, sortie: busMenu }); note(hz(m + 24), d + pos * temps, .5, { vol: .018, sortie: busMenu }); pos += l; });
+    if (i === 3 || i === 11) fantome(d + temps, busMenu);   // un « ouuuh » de fantôme toutes les 8 mesures
+    // nappe de traque : accord tenu très doux toutes les deux mesures
+    if (mesureN % 2 === 0) VALSE.accords[i].forEach(m => { note(hz(m - 12), d, 3.6, { type: "sawtooth", vol: .05, attaque: 1.2, sortie: busChasse, filtre: 600 }); });
+    if (Math.random() < .5) note(hz([74, 77, 81, 86][Math.floor(Math.random() * 4)]), d + Math.random() * 1.5, 2, { vol: .05, sortie: busChasse });
+    tMesure += temps * 3; mesureN++;
+  }
+  setTimeout(programmer, 400);
+}
+function fantome(d, sortie) {   // glissando de « theremin »
+  const t = audio.currentTime + d, o = audio.createOscillator(), g = audio.createGain(), vib = audio.createOscillator(), vg = audio.createGain();
+  o.type = "sine"; o.frequency.setValueAtTime(hz(62), t); o.frequency.linearRampToValueAtTime(hz(69), t + .8); o.frequency.linearRampToValueAtTime(hz(57), t + 2.4);
+  vib.frequency.value = 5.5; vg.gain.value = 6; vib.connect(vg).connect(o.frequency);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.05, t + .5); g.gain.linearRampToValueAtTime(0, t + 2.5);
+  o.connect(g).connect(sortie); o.start(t); vib.start(t); o.stop(t + 2.6); vib.stop(t + 2.6);
+}
+function changerAmbiance(type) {   // "menu", "chasse" ou "silence" (pendant les vidéos)
+  ambiance = type; if (!busMenu) return; const t = audio.currentTime;
+  busMenu.gain.cancelScheduledValues(t); busChasse.gain.cancelScheduledValues(t);
+  busMenu.gain.setTargetAtTime(type === "menu" ? .2 : 0, t, .4); busChasse.gain.setTargetAtTime(type === "chasse" ? .11 : 0, t, .6);
 }
 function majBoutonSon() { $("son").classList.toggle("coupe", !sonActif); $("son").textContent = sonActif ? "♪" : "✕"; }
 $("son").addEventListener("click", () => { sonActif = !sonActif; ecrire(CLES.son, sonActif); initAudio(); if (maitre) maitre.gain.value = sonActif ? 1 : 0; majBoutonSon(); });
 majBoutonSon();
+["pointerdown", "touchend"].forEach(ev => document.addEventListener(ev, () => initAudio(), { once: true, capture: true }));
 document.addEventListener("click", e => { if (e.target.closest("button, a")) { initAudio(); if (!e.target.closest("#son, #sceau, #suiteIntro")) sfx("clic"); } }, true);
 
 /* ===================== Accueil, parents ===================== */
@@ -573,13 +608,24 @@ majModes();
 
 /* ===================== Introduction ===================== */
 let pageIntro = 0, ecrit = null;
+function taire() { try { speechSynthesis.cancel(); } catch (e) {} }
+function parler(texte) {
+  if (!sonActif || !window.speechSynthesis) return;
+  try {
+    taire(); const u = new SpeechSynthesisUtterance(texte.replace(/\n/g, " "));
+    u.lang = "fr-FR"; u.pitch = 1.35; u.rate = .95; u.volume = 1;
+    const v = speechSynthesis.getVoices().find(x => /^fr/i.test(x.lang)); if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
 function afficherIntro(i) {
   const txt = INTRO[i], p = $("texteIntro"); clearInterval(ecrit); p.textContent = ""; let n = 0;
+  parler(txt);
   ecrit = setInterval(() => { n += 2; p.textContent = txt.slice(0, n); if (n >= txt.length) clearInterval(ecrit); }, 28);
   $("suiteIntro").textContent = i === INTRO.length - 1 ? "Ouvrir l'œil magique" : "Suite";
   sfx("page");
 }
-function lancerAventure() { initAudio(); if (lire(CLES.intro, false)) return ouvrirOeil(); pageIntro = 0; montrer("intro"); afficherIntro(0); }
+function lancerAventure(avecIntro) { initAudio(); if (!avecIntro) return ouvrirOeil(); pageIntro = 0; montrer("intro"); afficherIntro(0); }
 $("commencer").addEventListener("click", () => { initAudio(); preparerChoix(); montrer("partie"); });
 
 /* ===================== Nouvelle partie : combien de cryptides ? ===================== */
@@ -607,22 +653,23 @@ $("plus").addEventListener("click", () => { nombre = Math.min(12, nombre + 1); t
 document.querySelectorAll("[data-n]").forEach(b => b.addEventListener("click", () => { nombre = +b.dataset.n; tirer(); majChoix(); }));
 $("retirer").addEventListener("click", () => { tirer(); majChoix(); });
 $("fermerPartie").addEventListener("click", () => { majAccueil(); montrer("accueil"); });
-$("reprendre").addEventListener("click", lancerAventure);
+$("reprendre").addEventListener("click", () => lancerAventure(false));
 $("cestParti").addEventListener("click", () => {
   ecrire("cryptids-nombre", nombre);
   ecrire(CLES.partie, { liste: tirage, pris: [], membres: {}, debut: Date.now() });
   history.replaceState(null, "", location.pathname); prochaineTraque.lu = true;
-  lancerAventure();
+  lancerAventure(true);
 });
 function majAccueil() {
   const p = enCours();
   $("modeActuel").textContent = LIBELLES[mode()] + (p ? " · partie en cours " + p.pris.length + " / " + p.liste.length : "");
 }
+$("passerIntro").addEventListener("click", () => { clearInterval(ecrit); taire(); ecrire(CLES.intro, true); ouvrirOeil(); });
 $("suiteIntro").addEventListener("click", () => {
   const p = $("texteIntro");
   if (p.textContent.length < INTRO[pageIntro].length) { clearInterval(ecrit); p.textContent = INTRO[pageIntro]; return; }   // termine la phrase
   if (pageIntro < INTRO.length - 1) { afficherIntro(++pageIntro); return; }
-  ecrire(CLES.intro, true); ouvrirOeil();
+  ecrire(CLES.intro, true); taire(); ouvrirOeil();
 });
 
 /* ===================== Grimoire ===================== */
@@ -658,6 +705,7 @@ $("grille").addEventListener("click", e => {
 /* ===================== Relâcher ===================== */
 let figurineAMontrer = null;
 function relacher(k) {
+  changerAmbiance("silence");
   const t = TRAQUES[k], v = $("videoRelache"), img = $("envol");
   $("relache").hidden = false; $("voirFigurine").hidden = true; figurineAMontrer = t.cle;
   $("titreRelache").textContent = t.nom.split(",")[0] + (t.membres.length > 1 ? " retournent dans leur monde…" : " retourne dans son monde…");
@@ -678,6 +726,7 @@ function relacher(k) {
 }
 // tous les cryptides sont libres : Sporran remercie le joueur dans son monde
 function merci() {
+  changerAmbiance("silence");
   const v = $("videoRelache"); ecrire(CLES.merci, true);
   $("relache").hidden = false; $("envol").hidden = true; $("voirFigurine").hidden = true; figurineAMontrer = "catsith";
   $("titreRelache").textContent = "Sporran te remercie !"; sfx("victoire");
@@ -686,7 +735,7 @@ function merci() {
   v.src = "merci-catsith.mp4"; v.hidden = false; v.muted = !sonActif; v.currentTime = 0; v.onended = fin; v.onerror = fin;
   v.play().catch(() => { v.muted = true; v.play().catch(fin); });
 }
-function fermerVideo() { const v = $("videoRelache"); v.pause(); v.removeAttribute("src"); v.load(); $("relache").hidden = true; }
+function fermerVideo() { changerAmbiance("menu"); const v = $("videoRelache"); v.pause(); v.removeAttribute("src"); v.load(); $("relache").hidden = true; }
 $("fermerRelache").addEventListener("click", fermerVideo);
 document.querySelectorAll(".croix").forEach(b => b.addEventListener("click", () => {
   const cible = b.dataset.ferme;
@@ -695,7 +744,7 @@ document.querySelectorAll(".croix").forEach(b => b.addEventListener("click", () 
   if (cible === "grimoire") return $("fermerGrimoire").click();
   if (cible === "parents") return $("fermerParents").click();
   if (cible === "partie") return $("fermerPartie").click();
-  if (cible === "intro") { clearInterval(ecrit); return montrer("accueil"); }
+  if (cible === "intro") { clearInterval(ecrit); taire(); return montrer("accueil"); }
   if (cible === "victoire") { majAccueil(); return montrer("accueil"); }
 }));
 $("voirFigurine").addEventListener("click", () => { fermerVideo(); ouvrirFigurine(figurineAMontrer); });
@@ -905,7 +954,7 @@ function bandeau(texte, duree) { $("bandeau").textContent = texte; $("bandeau").
 /* ---------- Ouverture de l'œil (caméra, mouvements) ---------- */
 function erreur(msg) { bandeau(msg, 6000); }
 async function ouvrirOeil() {
-  initAudio(); sfx("oeil");
+  initAudio(); sfx("oeil"); taire(); changerAmbiance("chasse");
   let attente = Promise.resolve("granted");
   if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function")
     attente = DeviceOrientationEvent.requestPermission().catch(() => "denied");
